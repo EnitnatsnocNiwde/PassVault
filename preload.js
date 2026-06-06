@@ -45,6 +45,8 @@ contextBridge.exposeInMainWorld('api', {
   getAppPath: () => ipcRenderer.invoke('app:get-path'),
   hideWindow: () => ipcRenderer.invoke('app:hide-window'),
   forceQuit: () => ipcRenderer.invoke('app:force-quit'),
+  setZoom: (factor) => ipcRenderer.invoke('app:set-zoom', factor),
+  getZoom: () => ipcRenderer.invoke('app:get-zoom'),
   toggleLog: (enabled) => ipcRenderer.invoke('log:toggle', enabled),
   getLogDir: () => ipcRenderer.invoke('log:get-dir'),
   openLogDir: () => ipcRenderer.invoke('log:open-dir'),

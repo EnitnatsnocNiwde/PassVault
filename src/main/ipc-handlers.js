@@ -205,6 +205,11 @@ function setupAppHandlers() {
   ipcMain.handle('app:get-path', async () => path.join(__dirname, '..', '..'));
   ipcMain.handle('app:hide-window', async () => { const win = getWin(); if (win) win.hide(); return { success: true }; });
   ipcMain.handle('app:force-quit', async () => { const win = getWin(); if (win) win.removeAllListeners('close'); app.quit(); return { success: true }; });
+  ipcMain.handle('app:set-zoom', async (_, factor) => {
+    const win = getWin(); if (win) win.webContents.setZoomFactor(factor);
+    settings.set('zoomFactor', factor); return { success: true };
+  });
+  ipcMain.handle('app:get-zoom', async () => settings.get('zoomFactor') || 1);
 
   ipcMain.handle('log:toggle', async (_, enabled) => { logger.setEnabled(enabled); settings.set('logEnabled', enabled); logger.info('APP', enabled ? 'Logging enabled' : 'Logging disabled'); return { success: true }; });
   ipcMain.handle('log:get-dir', async () => logger.getLogDir());

@@ -3,6 +3,7 @@ const panels = {
     <h3>通用</h3>
     <div class="setting-row"><label>语言</label><select id="setting-language"><option value="zh-CN">中文</option><option value="en-US">English</option></select></div>
     <div class="setting-row"><label>主题</label><select id="setting-theme"><option value="dark">深色</option><option value="light">浅色</option></select></div>
+    <div class="setting-row"><label>界面缩放</label><select id="setting-zoom"><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option><option value="1.25">125%</option></select></div>
     <div class="setting-row"><label>调试日志</label><input type="checkbox" id="setting-log"></div>`,
 
   security: `
@@ -82,8 +83,16 @@ function switchPanel(cat) {
 function bindPanelEvents(cat) {
   if (cat === 'general') {
     document.getElementById('setting-language').value = settingsCache.language || 'zh-CN';
-    document.getElementById('setting-theme').value = settingsCache.theme || 'light';
+    document.getElementById('setting-theme').value = settingsCache.theme || 'dark';
     document.getElementById('setting-log').checked = settingsCache.logEnabled || false;
+
+    // zoom
+    const zoom = await window.api.getZoom();
+    document.getElementById('setting-zoom').value = String(zoom || 1);
+    document.getElementById('setting-zoom').addEventListener('change', async (e) => {
+      await window.api.setZoom(parseFloat(e.target.value));
+      showToast('缩放已应用');
+    });
 
     ['language', 'theme'].forEach(id => {
       document.getElementById('setting-' + id).addEventListener('change', async (e) => {

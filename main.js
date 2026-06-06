@@ -29,6 +29,13 @@ function createWindow() {
     icon: path.join(__dirname, 'icon', 'logo.png')
   });
 
+  // restore zoom factor
+  const settings = require('./src/main/settings');
+  try {
+    const zf = settings.get('zoomFactor') || 1;
+    mainWindow.webContents.setZoomFactor(zf);
+  } catch (e) {}
+
   // ── System Tray ──
   const trayIconPath = path.join(__dirname, 'icon', 'logo.png');
   try {
