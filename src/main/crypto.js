@@ -168,4 +168,4 @@ class VaultCrypto {
   }
 }
 
-module.exports = { VaultCrypto, deriveKey, generateSalt, hashSha256 };
+module.exports = { VaultCrypto, deriveKey, generateSalt, hashSha256, encrypt, decrypt };

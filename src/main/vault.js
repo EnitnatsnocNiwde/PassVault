@@ -2,7 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
-const { VaultCrypto, deriveKey, generateSalt, hashSha256 } = require('./crypto');
+const { VaultCrypto, deriveKey, generateSalt, hashSha256, encrypt } = require('./crypto');
 const logger = require('./logger');
 
 class VaultService {
