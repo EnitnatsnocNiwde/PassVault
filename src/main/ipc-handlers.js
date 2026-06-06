@@ -354,6 +354,35 @@ function setupSyncHandlers() {
   ipcMain.handle('sync:get-config', async () => {
     return settings.get('syncConfig') || { mode: 'none', url: '', username: '', password: '', interval: 15 };
   });
+
+  ipcMain.handle('sync:check-update', async () => {
+    try {
+      const cfg = settings.get('syncConfig') || {};
+      if (!cfg.mode || cfg.mode === 'none') return { hasUpdate: false, reason: '未配置同步' };
+
+      const vaultPath = settings.get('storagePath');
+      if (!vaultPath) return { hasUpdate: false, reason: '无本地文件' };
+
+      const fs = require('fs');
+      if (!fs.existsSync(vaultPath)) return { hasUpdate: false, reason: '本地文件不存在' };
+
+      const localStat = fs.statSync(vaultPath);
+      const remoteInfo = await sync.getRemoteInfo();
+      if (!remoteInfo.exists) return { hasUpdate: false, reason: '云端无文件' };
+
+      const remoteTime = new Date(remoteInfo.modified).getTime();
+      const localTime = localStat.mtimeMs;
+
+      return {
+        hasUpdate: remoteTime > localTime,
+        localTime: new Date(localTime).toISOString(),
+        remoteTime: new Date(remoteTime).toISOString(),
+        remoteSize: remoteInfo.size
+      };
+    } catch (e) {
+      return { hasUpdate: false, reason: e.message };
+    }
+  });
 }
 
 module.exports = { registerIpcHandlers };
