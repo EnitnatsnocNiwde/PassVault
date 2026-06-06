@@ -37,14 +37,21 @@ class VaultService {
   create(password, keyChoice, customKey, storagePath) {
     const vc = new VaultCrypto();
     vc.setupFromMasterPassword(password);
+    logger.crypto('SETUP_MASTER', { salt: vc.masterKeySalt.toString('hex').slice(0,8) });
 
     let recoveryKey = customKey;
     if (!recoveryKey) {
       recoveryKey = vc.generateRecoveryKey();
     } else {
       vc.setCustomRecoveryKey(recoveryKey);
-      vc.rekHash = hashSha256(vc.rek);
     }
+
+    const kek = deriveKey(password, vc.masterKeySalt);
+    const { encrypted, iv, authTag } = encrypt(vc.rek.toString('hex'), kek);
+    vc.encryptedRek = encrypted;
+    vc.rekIv = iv;
+    vc.rekAuthTag = authTag;
+    vc.rekHash = hashSha256(vc.rek);
     this.recoveryKeyDisplay = recoveryKey;
 
     this.data = {

@@ -119,8 +119,7 @@ function initSetupWizard() {
     }
   });
 
-  const defaultPath = require('electron') ? '' : 'Click Browse to select';
-  document.getElementById('setup-storage-path').value = defaultPath;
+  document.getElementById('setup-storage-path').value = '';
 
   document.getElementById('setup-finish').addEventListener('click', setupFinish);
 }
@@ -203,13 +202,17 @@ async function setupFinish() {
   const choice = document.querySelector('input[name="keyChoice"]:checked').value === 'custom' ? 'custom' : 'generate';
   const customKey = recoveryKey;
 
-  const result = await window.api.setup(setupPassword, choice, filePath, customKey);
-  if (result.success) {
-    state = result.state;
-    showPage('main');
-    initMainPage();
-  } else {
-    errorEl.textContent = result.error;
+  try {
+    const result = await window.api.setup(setupPassword, choice, filePath, customKey);
+    if (result.success) {
+      state = result.state;
+      showPage('main');
+      initMainPage();
+    } else {
+      errorEl.textContent = result.error || 'Setup failed';
+    }
+  } catch (e) {
+    errorEl.textContent = 'Error: ' + e.message;
   }
 }
 
