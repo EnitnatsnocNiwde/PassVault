@@ -1,248 +1,160 @@
-async function initSettingsPage() {
-  document.getElementById('settings-back-btn').addEventListener('click', () => {
-    showPage('main');
-  });
+const panels = {
+  general: `
+    <h3>通用</h3>
+    <div class="setting-row"><label>语言</label><select id="setting-language"><option value="zh-CN">中文</option><option value="en-US">English</option></select></div>
+    <div class="setting-row"><label>主题</label><select id="setting-theme"><option value="dark">深色</option><option value="light">浅色</option></select></div>
+    <div class="setting-row"><label>调试日志</label><input type="checkbox" id="setting-log"></div>`,
 
-  const sett = await window.api.getSettings();
-  document.getElementById('setting-language').value = sett.language || 'zh-CN';
-  document.getElementById('setting-theme').value = sett.theme || 'dark';
-  document.getElementById('setting-auto-lock').value = sett.autoLockMinutes || 30;
-  document.getElementById('setting-login-limit').value = sett.loginAttemptLimit || 5;
-  document.getElementById('setting-reveal-duration').value = sett.passwordRevealSeconds || 3;
-  document.getElementById('setting-clipboard').value = sett.clipboardClearMinutes || 1;
-  document.getElementById('setting-sync-mode').value = sett.syncMode || 'none';
-  document.getElementById('setting-storage-path').textContent = sett.storagePath || 'Not set';
+  security: `
+    <h3>安全</h3>
+    <div class="setting-row"><label>修改主密码</label><button class="btn btn-small" id="setting-change-password">修改 →</button></div>
+    <div class="setting-row"><label>恢复密钥</label><span class="key-hint" id="setting-key-hint">--------</span></div>
+    <div class="setting-row"><label>重新生成密钥</label><button class="btn btn-small" id="setting-regenerate-key">重置 →</button></div>
+    <div class="setting-row"><label>自动锁屏</label><select id="setting-auto-lock"><option value="5">5 分钟</option><option value="15">15 分钟</option><option value="30" selected>30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="0">永不</option></select></div>
+    <div class="setting-row"><label>登录错误上限</label><select id="setting-login-limit"><option value="3">3次</option><option value="5" selected>5次</option><option value="7">7次</option><option value="11">11次</option><option value="99">自定义(最多99)</option></select></div>
+    <div class="setting-row"><label>密码明文显示时长</label><select id="setting-reveal-duration"><option value="3" selected>3 秒</option><option value="5">5 秒</option><option value="10">10 秒</option><option value="30">30 秒</option><option value="0">永不隐藏</option></select></div>`,
 
-  if (state.recoveryKeyHint) {
-    document.getElementById('setting-key-hint').textContent = state.recoveryKeyHint;
-  }
+  clipboard: `
+    <h3>剪切板</h3>
+    <div class="setting-row"><label>自动清除</label><select id="setting-clipboard"><option value="1" selected>1 分钟</option><option value="3">3 分钟</option><option value="5">5 分钟</option><option value="0">不清除</option></select></div>`,
 
-  ['language', 'theme', 'auto-lock', 'login-limit', 'reveal-duration', 'clipboard'].forEach(id => {
-    document.getElementById('setting-' + id).addEventListener('change', async (e) => {
-      const keyMap = {
-        language: 'language', theme: 'theme', 'auto-lock': 'autoLockMinutes',
-        'login-limit': 'loginAttemptLimit', 'reveal-duration': 'passwordRevealSeconds',
-        clipboard: 'clipboardClearMinutes'
-      };
-      await window.api.setSetting(keyMap[id], parseInt(e.target.value) || e.target.value);
-      if (id === 'theme') {
-        document.body.classList.remove('theme-dark', 'theme-light');
-        document.body.classList.add('theme-' + e.target.value);
-      }
-      if (id === 'language') setLanguage(e.target.value);
-    });
-  });
+  shortcuts: `
+    <h3>快捷键</h3>
+    <div class="setting-row"><label>搜索</label><input id="shortcut-search" value="Ctrl+F" class="shortcut-input" readonly></div>
+    <div class="setting-row"><label>新建</label><input id="shortcut-new" value="Ctrl+N" class="shortcut-input" readonly></div>`,
 
-  document.getElementById('setting-sync-mode').addEventListener('change', (e) => {
-    const v = e.target.value;
-    document.getElementById('sync-webdav-config').style.display = v === 'webdav' ? 'block' : 'none';
-    document.getElementById('sync-folder-config').style.display = v === 'folder' ? 'block' : 'none';
-    window.api.setSetting('syncMode', v);
-  });
+  trash: `<h3>回收站</h3><div class="trash-list" id="trash-list"><p class="trash-empty">回收站为空</p></div>
+    <button class="btn btn-small btn-danger" id="clear-trash-btn">清空回收站</button>`,
 
-  document.getElementById('setting-change-password').addEventListener('click', showChangePassword);
-  document.getElementById('setting-regenerate-key').addEventListener('click', showRegenerateKey);
-  document.getElementById('setting-change-path').addEventListener('click', showChangePath);
-  document.getElementById('clear-trash-btn').addEventListener('click', clearTrash);
-  document.getElementById('add-vault-btn').addEventListener('click', showAddVault);
+  vaults: `<h3>密码库管理</h3><div class="vault-list" id="vault-list"></div>
+    <button class="btn btn-small" id="add-vault-btn">+ 新建密码库</button>`,
 
-  document.getElementById('setting-log').checked = sett.logEnabled || false;
-  document.getElementById('setting-log').addEventListener('change', async (e) => {
-    await window.api.toggleLog(e.target.checked);
-    showToast(e.target.checked ? 'Logging enabled' : 'Logging disabled');
-  });
-  document.getElementById('export-plain-btn').addEventListener('click', exportPlain);
-  document.getElementById('export-encrypted-btn').addEventListener('click', exportEncrypted);
-  document.getElementById('import-btn').addEventListener('click', importFile);
+  sync: `
+    <h3>同步</h3>
+    <div class="setting-row"><label>同步方式</label><select id="setting-sync-mode"><option value="none">无</option><option value="webdav">WebDAV</option><option value="folder">本地文件夹</option></select></div>
+    <div id="sync-webdav-config" style="display:none">
+      <div class="setting-row"><input class="input" placeholder="WebDAV 地址" id="setting-webdav-url"></div>
+      <div class="setting-row"><input class="input" placeholder="用户名" id="setting-webdav-user"></div>
+      <div class="setting-row"><input type="password" class="input" placeholder="密码" id="setting-webdav-password"></div>
+      <button class="btn btn-small" id="test-webdav-btn">测试连接</button>
+    </div>
+    <div id="sync-folder-config" style="display:none">
+      <div class="setting-row"><input class="input" id="setting-folder-path" readonly><button class="btn btn-small" id="pick-folder-btn">浏览</button></div>
+    </div>`,
 
-  renderVaultList();
-  renderTrash();
+  data: `
+    <h3>数据管理</h3>
+    <button class="btn btn-small" id="export-plain-btn">导出明文</button>
+    <button class="btn btn-small" id="export-encrypted-btn">导出加密</button>
+    <button class="btn btn-small" id="import-btn">导入密码库</button>`,
+
+  storage: `
+    <h3>存储</h3>
+    <div class="setting-row"><label>密码库路径</label><span class="path-display" id="setting-storage-path"></span></div>
+    <div class="setting-row"><button class="btn btn-small" id="setting-change-path">更改路径</button></div>`,
+
+  about: `<h3>关于</h3><p>密码保管箱 v1.0.0</p>`
+};
+
+let activeCat = 'general';
+
+function switchPanel(cat) {
+  activeCat = cat;
+  document.getElementById('settings-panel').innerHTML = panels[cat];
+  document.querySelectorAll('.sidebar-item').forEach(s => s.classList.toggle('active', s.dataset.cat === cat));
+
+  bindPanelEvents(cat);
 }
 
-function renderVaultList() {
-  const list = document.getElementById('vault-list');
-  list.innerHTML = '';
-  state.vaults.forEach(v => {
-    const div = document.createElement('div');
-    div.className = 'vault-item';
-    div.innerHTML = `
-      <span class="vault-drag">≡</span>
-      <span class="vault-name">${v.name}</span>
-      <div class="vault-actions">
-        <button class="btn btn-small rename-vault-btn" data-id="${v.id}">Rename</button>
-        ${state.vaults.length > 1 ? `<button class="btn btn-small delete-vault-btn" data-id="${v.id}">Delete</button>` : ''}
-      </div>`;
-    list.appendChild(div);
-    div.querySelector('.delete-vault-btn')?.addEventListener('click', () => showDeleteVault(v.id));
-    div.querySelector('.rename-vault-btn').addEventListener('click', () => {
-      const name = prompt('New name:', v.name);
-      if (name) window.api.renameVault(v.id, name).then(() => {
-        window.api.getState().then(s => { state = s; renderVaultList(); });
+function bindPanelEvents(cat) {
+  if (cat === 'general') {
+    document.getElementById('setting-language').value = settingsCache.language || 'zh-CN';
+    document.getElementById('setting-theme').value = settingsCache.theme || 'light';
+    document.getElementById('setting-log').checked = settingsCache.logEnabled || false;
+
+    ['language', 'theme'].forEach(id => {
+      document.getElementById('setting-' + id).addEventListener('change', async (e) => {
+        const keyMap = { language: 'language', theme: 'theme' };
+        await window.api.setSetting(keyMap[id], e.target.value);
+        if (id === 'theme') {
+          document.body.classList.remove('theme-dark', 'theme-light');
+          document.body.classList.add('theme-' + e.target.value);
+        }
+        if (id === 'language') setLanguage(e.target.value);
       });
     });
-  });
-}
-
-function showDeleteVault(vaultId) {
-  const overlay = document.getElementById('delete-confirm-overlay');
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div class="modal modal-small">
-      <h3>Delete Vault</h3>
-      <p>What to do with entries in this vault?</p>
-      <button class="btn btn-danger" id="vault-del-entries">Delete all entries</button>
-      <button class="btn" id="vault-move-entries">Move to first vault</button>
-      <button class="btn" id="vault-del-cancel">Cancel</button>
-    </div>`;
-  document.getElementById('vault-del-entries').addEventListener('click', async () => {
-    overlay.style.display = 'none';
-    await window.api.deleteVault(vaultId, 'delete');
-    state = await window.api.getState();
-    renderVaultList();
-  });
-  document.getElementById('vault-move-entries').addEventListener('click', async () => {
-    overlay.style.display = 'none';
-    await window.api.deleteVault(vaultId, 'move');
-    state = await window.api.getState();
-    renderVaultList();
-  });
-  document.getElementById('vault-del-cancel').addEventListener('click', () => overlay.style.display = 'none');
-}
-
-function showAddVault() {
-  const name = prompt('Vault name:');
-  if (name) {
-    window.api.addVault(name).then(() => {
-      window.api.getState().then(s => { state = s; renderVaultList(); });
+    document.getElementById('setting-log').addEventListener('change', async (e) => {
+      await window.api.toggleLog(e.target.checked);
+      showToast(e.target.checked ? '日志已开启' : '日志已关闭');
     });
   }
-}
 
-function renderTrash() {
-  const list = document.getElementById('trash-list');
-  if (!state.trash || !state.trash.length) {
-    list.innerHTML = '<p class="trash-empty">' + t('trash.empty') + '</p>';
-    return;
-  }
-  list.innerHTML = state.trash.map(t => `
-    <div class="trash-item">
-      <span class="trash-info">${t.entry.website} - ${t.entry.account}</span>
-      <span class="trash-time">${new Date(t.deletedAt).toLocaleString()}</span>
-      <button class="btn btn-small restore-trash-btn" data-id="${t.entry.id}">Restore</button>
-      <button class="btn btn-small btn-danger perm-delete-btn" data-id="${t.entry.id}">Permanent</button>
-    </div>`).join('');
-
-  list.querySelectorAll('.restore-trash-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      await window.api.restoreEntry(parseInt(btn.getAttribute('data-id')));
-      state = await window.api.getState();
-      renderTrash();
-      showToast(t('trash.restored'));
-    });
-  });
-}
-
-async function clearTrash() {
-  await window.api.clearTrash();
-  state = await window.api.getState();
-  renderTrash();
-  showToast(t('trash.cleared'));
-}
-
-function showChangePassword() {
-  const oldPw = prompt('Current master password:');
-  if (!oldPw) return;
-  const newPw = prompt('New master password (≥4 chars):');
-  if (!newPw || newPw.length < 4) { showToast('Password must be at least 4 characters'); return; }
-  window.api.changeMasterPassword(oldPw, newPw).then(result => {
-    showToast(result.success ? 'Master password changed' : 'Wrong current password');
-  });
-}
-
-function showRegenerateKey() {
-  const overlay = document.getElementById('delete-confirm-overlay');
-  overlay.style.display = 'flex';
-  overlay.innerHTML = `
-    <div class="modal modal-small">
-      <h3>Regenerate Recovery Key</h3>
-      <p>This will generate a new key. The old key will no longer work.</p>
-      <input type="password" id="regenerate-pw" class="input" placeholder="Confirm master password" style="margin:8px 0;">
-      <button class="btn btn-primary" id="do-regenerate">Regenerate</button>
-      <button class="btn" id="regenerate-cancel">Cancel</button>
-    </div>`;
-  document.getElementById('do-regenerate').addEventListener('click', async () => {
-    const pw = document.getElementById('regenerate-pw').value;
-    overlay.style.display = 'none';
-    const result = await window.api.regenerateKey(pw);
-    if (result.success) {
-      const overlay2 = document.getElementById('delete-confirm-overlay');
-      overlay2.style.display = 'flex';
-      overlay2.innerHTML = `
-        <div class="modal modal-small">
-          <h3>New Recovery Key (shown once)</h3>
-          <div class="key-box"><code>${result.recoveryKey}</code></div>
-          <button class="btn btn-primary" id="new-key-close">I have saved it</button>
-        </div>`;
-      document.getElementById('new-key-close').addEventListener('click', () => overlay2.style.display = 'none');
-      state = await window.api.getState();
+  if (cat === 'security') {
+    document.getElementById('setting-auto-lock').value = settingsCache.autoLockMinutes || 30;
+    document.getElementById('setting-login-limit').value = settingsCache.loginAttemptLimit || 5;
+    document.getElementById('setting-reveal-duration').value = settingsCache.passwordRevealSeconds || 3;
+    if (state.recoveryKeyHint) {
       document.getElementById('setting-key-hint').textContent = state.recoveryKeyHint;
-    } else {
-      showToast('Wrong password');
     }
+    ['auto-lock', 'login-limit', 'reveal-duration'].forEach(id => {
+      document.getElementById('setting-' + id).addEventListener('change', async (e) => {
+        const keyMap = { 'auto-lock': 'autoLockMinutes', 'login-limit': 'loginAttemptLimit', 'reveal-duration': 'passwordRevealSeconds' };
+        await window.api.setSetting(keyMap[id], parseInt(e.target.value));
+      });
+    });
+    document.getElementById('setting-change-password').addEventListener('click', showChangePassword);
+    document.getElementById('setting-regenerate-key').addEventListener('click', showRegenerateKey);
+  }
+
+  if (cat === 'clipboard') {
+    document.getElementById('setting-clipboard').value = settingsCache.clipboardClearMinutes || 1;
+    document.getElementById('setting-clipboard').addEventListener('change', async (e) => {
+      await window.api.setSetting('clipboardClearMinutes', parseInt(e.target.value));
+    });
+  }
+
+  if (cat === 'trash') {
+    renderTrash();
+    document.getElementById('clear-trash-btn').addEventListener('click', clearTrash);
+  }
+
+  if (cat === 'vaults') {
+    renderVaultList();
+    document.getElementById('add-vault-btn').addEventListener('click', showAddVault);
+  }
+
+  if (cat === 'sync') {
+    document.getElementById('setting-sync-mode').value = settingsCache.syncMode || 'none';
+    document.getElementById('setting-sync-mode').addEventListener('change', (e) => {
+      const v = e.target.value;
+      document.getElementById('sync-webdav-config').style.display = v === 'webdav' ? 'block' : 'none';
+      document.getElementById('sync-folder-config').style.display = v === 'folder' ? 'block' : 'none';
+      window.api.setSetting('syncMode', v);
+    });
+  }
+
+  if (cat === 'data') {
+    document.getElementById('export-plain-btn').addEventListener('click', exportPlain);
+    document.getElementById('export-encrypted-btn').addEventListener('click', exportEncrypted);
+    document.getElementById('import-btn').addEventListener('click', importFile);
+  }
+
+  if (cat === 'storage') {
+    document.getElementById('setting-storage-path').textContent = settingsCache.storagePath || '未设置';
+    document.getElementById('setting-change-path').addEventListener('click', showChangePath);
+  }
+}
+
+let settingsCache = {};
+
+async function initSettingsPage() {
+  settingsCache = await window.api.getSettings();
+
+  document.getElementById('settings-back-btn').addEventListener('click', () => showPage('main'));
+
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    item.addEventListener('click', () => switchPanel(item.dataset.cat));
   });
-  document.getElementById('regenerate-cancel').addEventListener('click', () => overlay.style.display = 'none');
-}
 
-async function showChangePath() {
-  const folder = await window.api.pickFolder();
-  if (folder) {
-    const path = folder + '\\vault.pvault';
-    await window.api.setSetting('storagePath', path);
-    document.getElementById('setting-storage-path').textContent = path;
-    await window.api.save();
-  }
-}
-
-async function exportPlain() {
-  const path = await window.api.saveFile([{ name: 'JSON Files', extensions: ['json'] }]);
-  if (path) {
-    await window.api.exportPlain(path);
-    showToast('Exported successfully');
-  }
-}
-
-async function exportEncrypted() {
-  const path = await window.api.saveFile([{ name: 'PassVault Files', extensions: ['pvault'] }]);
-  if (path) {
-    await window.api.exportEncrypted(path);
-    showToast('Exported successfully');
-  }
-}
-
-async function importFile() {
-  const path = await window.api.pickFile([
-    { name: 'PassVault Files', extensions: ['json', 'pvault'] }
-  ]);
-  if (!path) return;
-
-  const isJson = path.endsWith('.json');
-  const type = isJson ? 'plain' : 'encrypted';
-
-  let password = null;
-  if (type === 'encrypted') {
-    password = prompt('Enter master password for this vault:');
-    if (!password) return;
-  }
-
-  const result = await window.api.importFile(path, type, password);
-  if (!result.success) { showToast('Import failed: ' + result.error); return; }
-
-  if (type === 'plain') {
-  } else {
-
-  }
-
-  state = await window.api.getState();
-  const q = document.getElementById('main-search')?.value || '';
-  showToast('Import completed');
+  switchPanel('general');
 }
