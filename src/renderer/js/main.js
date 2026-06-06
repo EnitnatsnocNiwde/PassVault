@@ -160,6 +160,8 @@ async function initMainPage() {
       );
       mainState = await window.api.getState();
       state = mainState;
+      // reset column sort so drag order takes effect
+      sortField = null;
       const q = document.getElementById('main-search').value;
       const global = document.getElementById('search-global').checked;
       renderTable(mainState.vaults, mainState.entries, q, searchFields, global, activeVaultFilter);
