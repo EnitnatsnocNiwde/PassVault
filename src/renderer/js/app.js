@@ -67,17 +67,17 @@ function showCloseDialog() {
   overlay.style.display = 'flex';
   overlay.innerHTML = `
     <div class="modal modal-small">
-      <h3>关闭 PassVault</h3>
+      <h3>${t('app.closeTitle')}</h3>
       <div style="margin:12px 0;display:flex;flex-direction:column;gap:8px;">
-        <label><input type="radio" name="closeOption" value="tray"> 最小化到系统托盘</label>
-        <label><input type="radio" name="closeOption" value="quit"> 直接退出</label>
+        <label><input type="radio" name="closeOption" value="tray"> ${t('app.minimizeToTray')}</label>
+        <label><input type="radio" name="closeOption" value="quit"> ${t('app.quitDirect')}</label>
       </div>
       <label style="font-size:12px;color:var(--text-secondary);display:flex;align-items:center;gap:4px;">
-        <input type="checkbox" id="remember-close"> 记住我的选择
+        <input type="checkbox" id="remember-close"> ${t('app.remember')}
       </label>
       <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
-        <button class="btn" onclick="document.getElementById('delete-confirm-overlay').style.display='none'">取消</button>
-        <button class="btn btn-primary" id="close-confirm-btn">确定</button>
+        <button class="btn" onclick="document.getElementById('delete-confirm-overlay').style.display='none'">${t('common.cancel')}</button>
+        <button class="btn btn-primary" id="close-confirm-btn">${t('common.confirm')}</button>
       </div>
     </div>`;
 

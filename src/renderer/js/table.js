@@ -29,11 +29,11 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
   const headerRow = document.createElement('div');
   headerRow.className = 'table-row table-header-row';
   const sortableFields = ['id', 'website', 'alias', 'account'];
-  const labels = { id: 'ID', website: '网站', alias: '别称', account: '账号', password: '密码', description: '描述' };
+  const labels = { id: t('table.id'), website: t('table.website'), alias: t('table.alias'), account: t('table.account'), password: t('table.passwordHint'), description: t('table.description') };
   const cells = sortableFields.map(f => {
     const clsMap = { id: 'col-id', website: 'col-website', alias: 'col-alias', account: 'col-account', password: 'col-password-hdr', description: 'col-description' };
     const arrow = sortField === f ? (sortAsc ? '▲' : '▼') : '';
-    if (f === 'password') return `<span class="col-password-hdr" data-sort="password">${labels[f]} <small>点击显示${arrow}</small></span>`;
+    if (f === 'password') return `<span class="col-password-hdr" data-sort="password">${labels[f]} <small>${arrow}</small></span>`;
     return `<span class="${clsMap[f]}" data-sort="${f}" style="cursor:pointer">${labels[f]} ${arrow}</span>`;
   });
   headerRow.innerHTML = cells.join('') + '<span class="col-copy-hdr"></span><span class="col-drag"></span>';
@@ -53,7 +53,7 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
 
   if (filtered.length === 0) {
     emptyEl.style.display = 'flex';
-    countEl.textContent = '0 条记录';
+    countEl.textContent = t('main.count', { n: 0 });
     return;
   }
   emptyEl.style.display = 'none';
@@ -81,7 +81,7 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
       empty.className = 'table-row';
       empty.style.color = 'var(--text-muted)';
       empty.style.justifyContent = 'center';
-      empty.textContent = '该密码库暂无匹配条目';
+      empty.textContent = t('main.noMatch');
       empty.style.fontSize = '12px';
       container.appendChild(empty);
       return;
@@ -93,7 +93,7 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
     });
   });
 
-  countEl.textContent = `${filtered.length} 条记录`;
+  countEl.textContent = t('main.count', { n: filtered.length });
 }
 
 function filterEntries(entries, query, fields, global, vaults) {
@@ -146,13 +146,13 @@ function createTableRow(entry, vaults) {
 
   row.innerHTML = `
     <span class="col-id">${displayId}</span>
-    <span class="col-website">${escapeHtml(ws)}${entry.website.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.website)}" title="复制完整网址">📋</button>` : ''}</span>
+    <span class="col-website">${escapeHtml(ws)}${entry.website.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.website)}" title="${t('table.copyWebsiteHint')}">📋</button>` : ''}</span>
     <span class="col-alias">${escapeHtml(as)}</span>
-    <span class="col-account">${escapeHtml(ac)}${entry.account.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.account)}" title="复制完整账号">📋</button>` : ''}</span>
-    <span class="col-password" data-pw="${escapeAttr(entry.password)}" title="点击显示密码">****</span>
-    <button class="btn-icon copy-row-btn" data-text="${escapeAttr(entry.password)}" title="复制密码">📝</button>
+    <span class="col-account">${escapeHtml(ac)}${entry.account.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.account)}" title="${t('table.copyAccountHint')}">📋</button>` : ''}</span>
+    <span class="col-password" data-pw="${escapeAttr(entry.password)}" title="${t('table.passwordTitle')}">****</span>
+    <button class="btn-icon copy-row-btn" data-text="${escapeAttr(entry.password)}" title="${t('table.copyHint')}">📝</button>
     <span class="col-description">${escapeHtml(entry.description || '-')}</span>
-    <span class="col-drag" title="长按拖拽排序">≡</span>
+    <span class="col-drag" title="${t('table.dragHint')}">≡</span>
   `;
 
   // inline copy buttons (no auto-clear)
@@ -160,7 +160,7 @@ function createTableRow(entry, vaults) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       window.api.copyToClipboard(btn.getAttribute('data-text'), 0);
-      showToast('已复制');
+      showToast(t('main.copyToast'));
     });
   });
 
