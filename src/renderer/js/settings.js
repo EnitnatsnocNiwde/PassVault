@@ -53,6 +53,13 @@ const panels = {
     <div class="setting-row"><label>密码库路径</label><span class="path-display" id="setting-storage-path"></span></div>
     <div class="setting-row"><button class="btn btn-small" id="setting-change-path">更改路径</button></div>`,
 
+  log: `
+    <h3>日志</h3>
+    <div class="setting-row"><label>启用日志</label><input type="checkbox" id="setting-log-panel"></div>
+    <div class="setting-row"><label>日志目录</label><span class="path-display" id="setting-log-dir"></span></div>
+    <div class="setting-row"><button class="btn btn-small" id="setting-open-log-dir">打开日志目录</button></div>
+    <p style="font-size:11px;color:var(--text-muted);margin-top:8px;">日志文件保存在项目目录 logs/ 下，按日期命名。开启后可记录加解密操作、数据变更等事件，便于排查问题。</p>`,
+
   about: `<h3>关于</h3><p>密码保管箱 v1.0.0</p>`
 };
 
@@ -143,6 +150,21 @@ function bindPanelEvents(cat) {
     document.getElementById('setting-storage-path').textContent = settingsCache.storagePath || '未设置';
     document.getElementById('setting-change-path').addEventListener('click', showChangePath);
   }
+
+  if (cat === 'log') {
+    document.getElementById('setting-log-panel').checked = settingsCache.logEnabled || false;
+    document.getElementById('setting-log-panel').addEventListener('change', async (e) => {
+      await window.api.toggleLog(e.target.checked);
+      showToast(e.target.checked ? '日志已开启' : '日志已关闭');
+    });
+    window.api.getLogDir().then(dir => {
+      document.getElementById('setting-log-dir').textContent = dir || '';
+    });
+    document.getElementById('setting-open-log-dir').addEventListener('click', async () => {
+      await window.api.openLogDir();
+      showToast('已打开日志目录');
+    });
+  }
 }
 
 let settingsCache = {};
@@ -150,7 +172,10 @@ let settingsCache = {};
 async function initSettingsPage() {
   settingsCache = await window.api.getSettings();
 
-  document.getElementById('settings-back-btn').addEventListener('click', () => showPage('main'));
+  document.getElementById('settings-back-btn').addEventListener('click', () => {
+    showPage('main');
+    initMainPage();
+  });
 
   document.querySelectorAll('.sidebar-item').forEach(item => {
     item.addEventListener('click', () => switchPanel(item.dataset.cat));
@@ -356,14 +381,33 @@ function showDeleteVaultDialog(vaultId) {
 }
 
 async function showAddVault() {
-  const name = prompt('新密码库名称：');
-  if (!name || !name.trim()) return;
-  const result = await window.api.addVault(name.trim());
-  if (result.success) {
-    state = await window.api.getState();
-    renderVaultList();
-    showToast('密码库已创建');
-  }
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small">
+      <h3>新建密码库</h3>
+      <div class="form-group"><input id="new-vault-name" class="input" placeholder="密码库名称"></div>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" id="new-vault-cancel">取消</button>
+        <button class="btn btn-primary" id="new-vault-confirm">创建</button>
+      </div>
+    </div>`;
+
+  document.getElementById('new-vault-cancel').addEventListener('click', () => overlay.style.display = 'none');
+  document.getElementById('new-vault-confirm').addEventListener('click', async () => {
+    const name = document.getElementById('new-vault-name').value.trim();
+    if (!name) return;
+    const result = await window.api.addVault(name);
+    if (result.success) {
+      overlay.style.display = 'none';
+      state = await window.api.getState();
+      renderVaultList();
+      showToast('密码库已创建');
+    }
+  });
+  document.getElementById('new-vault-name').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('new-vault-confirm').click();
+  });
 }
 
 // ─── Data Management ────────────────────────────────────────
@@ -395,12 +439,86 @@ async function importFile() {
   }
 
   const result = await window.api.importFile(filePath, isEncrypted ? 'encrypted' : 'plain', password);
-  if (result.success) {
-    showToast(`发现 ${result.entries.length} 条数据。冲突处理功能开发中，当前版本将跳过重复条目。`);
-    // TODO: implement conflict resolution dialog
-  } else {
+  if (!result.success) {
     showToast('导入失败: ' + (result.error || '未知错误'));
+    return;
   }
+
+  const entries = result.entries;
+  const conflicts = result.conflicts || [];
+
+  if (conflicts.length === 0) {
+    // no conflicts, import directly
+    const res = await window.api.importFinalize(entries, {});
+    showToast(`成功导入 ${res.added} 条记录`);
+    state = await window.api.getState();
+    return;
+  }
+
+  // show conflict resolution dialog
+  showImportConflictDialog(entries, conflicts);
+}
+
+let conflictIndex = 0;
+let conflictMap = {};
+
+function showImportConflictDialog(entries, conflicts) {
+  if (conflictIndex >= conflicts.length) {
+    // all resolved, finalize
+    finalizeImport(entries);
+    return;
+  }
+
+  const c = conflicts[conflictIndex];
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small">
+      <h3>发现重复条目 (${conflictIndex + 1}/${conflicts.length})</h3>
+      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">
+        <b>导入:</b> ${c.entry.website || '-'} / ${c.entry.alias || '-'} / ${c.entry.account || '-'}<br>
+        已存在同名条目（网站+别名+账号一致）
+      </p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+        <button class="btn btn-small" id="conf-skip">跳过此条</button>
+        <button class="btn btn-small" id="conf-overwrite">覆盖已有条目</button>
+        <button class="btn btn-small" id="conf-skip-all">跳过所有冲突</button>
+        <button class="btn btn-small btn-danger" id="conf-overwrite-all">覆盖所有冲突</button>
+      </div>
+    </div>`;
+
+  document.getElementById('conf-skip').addEventListener('click', () => {
+    conflictMap[c.index] = 'skip';
+    conflictIndex++;
+    overlay.style.display = 'none';
+    showImportConflictDialog(entries, conflicts);
+  });
+  document.getElementById('conf-overwrite').addEventListener('click', () => {
+    conflictMap[c.index] = 'overwrite';
+    conflictIndex++;
+    overlay.style.display = 'none';
+    showImportConflictDialog(entries, conflicts);
+  });
+  document.getElementById('conf-skip-all').addEventListener('click', () => {
+    conflicts.forEach(cn => { conflictMap[cn.index] = 'skip'; });
+    conflictIndex = conflicts.length;
+    overlay.style.display = 'none';
+    finalizeImport(entries);
+  });
+  document.getElementById('conf-overwrite-all').addEventListener('click', () => {
+    conflicts.forEach(cn => { conflictMap[cn.index] = 'overwrite'; });
+    conflictIndex = conflicts.length;
+    overlay.style.display = 'none';
+    finalizeImport(entries);
+  });
+}
+
+async function finalizeImport(entries) {
+  const res = await window.api.importFinalize(entries, conflictMap);
+  showToast(`成功导入 ${res.added} 条记录`);
+  state = await window.api.getState();
+  conflictIndex = 0;
+  conflictMap = {};
 }
 
 // ─── Helpers ────────────────────────────────────────────────

@@ -1,9 +1,10 @@
 const electron = require('electron');
 const path = require('path');
 
-const { app, BrowserWindow, Menu } = electron;
+const { app, BrowserWindow, Menu, Tray, nativeImage } = electron;
 
 let mainWindow = null;
+let tray = null;
 
 function createWindow() {
   const settings = require('./src/main/settings');
@@ -27,6 +28,39 @@ function createWindow() {
     },
     icon: path.join(__dirname, 'icon', 'logo.png')
   });
+
+  // ── System Tray ──
+  const trayIconPath = path.join(__dirname, 'icon', 'logo.png');
+  try {
+    const trayIcon = nativeImage.createFromPath(trayIconPath);
+    tray = new Tray(trayIcon.resize({ width: 16, height: 16 }));
+    tray.setToolTip('密码保管箱');
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '显示主窗口',
+        click: () => {
+          mainWindow.show();
+          mainWindow.focus();
+        }
+      },
+      { type: 'separator' },
+      {
+        label: '退出',
+        click: () => {
+          mainWindow.removeAllListeners('close');
+          mainWindow.close();
+          app.quit();
+        }
+      }
+    ]);
+    tray.setContextMenu(contextMenu);
+    tray.on('double-click', () => {
+      mainWindow.show();
+      mainWindow.focus();
+    });
+  } catch (e) {
+    console.error('Failed to create tray:', e.message);
+  }
 
   mainWindow.loadFile(path.join(__dirname, 'src', 'renderer', 'index.html'));
 
@@ -64,4 +98,7 @@ app.on('window-all-closed', () => {});
 app.on('activate', () => {
   if (mainWindow === null) createWindow();
   else mainWindow.show();
+});
+app.on('before-quit', () => {
+  if (tray) { tray.destroy(); tray = null; }
 });

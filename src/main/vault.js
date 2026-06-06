@@ -56,7 +56,7 @@ class VaultService {
 
     this.data = {
       vaults: [
-        { id: 1, name: 'Default', idPrefix: 10000, nextId: 10001, createdAt: new Date().toISOString() }
+        { id: 1, name: '默认', idPrefix: 10000, nextId: 10001, createdAt: new Date().toISOString() }
       ],
       entries: [],
       trash: [],
@@ -146,27 +146,32 @@ class VaultService {
   }
 
   addEntry(entry) {
-    const vault = this.data.vaults.find(v => v.id === entry.vaultIds[0]);
-    if (!vault) throw new Error('Vault not found');
-    const id = vault.nextId;
-    vault.nextId++;
-    const newEntry = {
-      id,
-      website: entry.website,
-      alias: entry.alias,
-      account: entry.account,
-      password: entry.password,
-      description: entry.description || '',
-      vaultIds: entry.vaultIds,
-      visible: entry.visible !== false,
-      order: this.data.entries.length,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-    this.data.entries.push(newEntry);
+    if (!entry.vaultIds || !entry.vaultIds.length) throw new Error('至少选择一个密码库');
+    const created = [];
+    for (const vaultId of entry.vaultIds) {
+      const vault = this.data.vaults.find(v => v.id === vaultId);
+      if (!vault) throw new Error('Vault not found: ' + vaultId);
+      const id = vault.nextId;
+      vault.nextId++;
+      const newEntry = {
+        id,
+        website: entry.website,
+        alias: entry.alias,
+        account: entry.account,
+        password: entry.password,
+        description: entry.description || '',
+        vaultIds: [vaultId],
+        visible: entry.visible !== false,
+        order: this.data.entries.length,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      this.data.entries.push(newEntry);
+      created.push(newEntry);
+      logger.vault('ADD_ENTRY', { id, website: entry.website, vaultId, vaultName: vault.name });
+    }
     this.save();
-    logger.vault('ADD_ENTRY', { id, website: entry.website });
-    return newEntry;
+    return created;
   }
 
   updateEntry(updated) {

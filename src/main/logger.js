@@ -42,6 +42,7 @@ function write(level, source, message, data) {
 
 const logger = {
   setEnabled(val) { enabled = val; },
+  getLogDir() { return getLogDir(); },
 
   info(source, message, data) { write('INFO', source, message, data); },
   warn(source, message, data) { write('WARN', source, message, data); },

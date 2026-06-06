@@ -33,5 +33,8 @@
       "src/**/*",
       "icon/**/*"
     ]
+  },
+  "dependencies": {
+    "webdav": "^5.10.0"
   }
 }

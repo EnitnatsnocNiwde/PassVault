@@ -109,33 +109,44 @@
 
 <!-- MAIN PAGE -->
 <div id="page-main" class="page">
-  <header class="main-header">
-    <img class="header-logo" id="header-logo" src="" alt="PassVault" onerror="this.style.display='none'">
-    <span class="header-title">密码保管箱</span>
-    <button class="btn btn-primary btn-small" id="main-add-btn">+ 添加</button>
-  </header>
-  <button class="settings-gear" id="main-settings-btn" title="设置">&#x2699;</button>
-  <div class="main-search-bar">
-    <input type="text" id="main-search" class="search-input" placeholder="搜索...">
-    <div class="search-toggles">
-      <label class="toggle global-toggle"><input type="checkbox" id="search-global"> 全局</label>
-      <button class="toggle-btn active" data-field="website">网站</button>
-      <button class="toggle-btn active" data-field="alias">别称</button>
-      <button class="toggle-btn active" data-field="account">账号</button>
-      <button class="toggle-btn" data-field="password">&#x1F512; 密码</button>
+  <div class="main-body">
+    <nav class="main-sidebar">
+      <div class="main-sidebar-top">
+        <div class="sidebar-section-title">密码库</div>
+        <div class="main-vault-list" id="main-vault-list"></div>
+      </div>
+      <button class="settings-gear" id="main-settings-btn" title="设置">&#x2699;</button>
+    </nav>
+    <div class="main-content">
+      <header class="main-header">
+        <img class="header-logo" id="header-logo" src="" alt="PassVault" onerror="this.style.display='none'">
+        <span class="header-title">密码保管箱</span>
+        <button class="btn btn-small" id="main-lock-btn" title="锁定">🔒 锁定</button>
+        <button class="btn btn-primary btn-small" id="main-add-btn">+ 添加</button>
+      </header>
+      <div class="main-search-bar">
+        <input type="text" id="main-search" class="search-input" placeholder="搜索...">
+        <div class="search-toggles">
+          <label class="toggle global-toggle"><input type="checkbox" id="search-global"> 全局搜索</label>
+          <button class="toggle-btn active" data-field="website">网站优先</button>
+          <button class="toggle-btn active" data-field="alias">别称</button>
+          <button class="toggle-btn active" data-field="account">账号</button>
+          <button class="toggle-btn" data-field="password">🔒 密码</button>
+        </div>
+      </div>
+      <div class="main-table-wrap" id="main-table-wrap">
+        <div class="main-table" id="main-table"></div>
+        <div class="main-empty" id="main-empty" style="display:none">
+          <div class="empty-icon">&#x1F4CB;</div>
+          <p>还没有密码，点击 + 添加第一条</p>
+        </div>
+      </div>
+      <footer class="main-footer">
+        <span id="main-count">0 条记录</span>
+        <span class="main-sync-status" id="main-sync-status"></span>
+      </footer>
     </div>
   </div>
-  <div class="main-table-wrap" id="main-table-wrap">
-    <div class="main-table" id="main-table"></div>
-    <div class="main-empty" id="main-empty" style="display:none">
-      <div class="empty-icon">&#x1F4CB;</div>
-      <p>还没有密码，点击 + 添加第一条</p>
-    </div>
-  </div>
-  <footer class="main-footer">
-    <span id="main-count">0 条记录</span>
-    <span class="main-sync-status" id="main-sync-status"></span>
-  </footer>
 </div>
 
 <!-- SETTINGS PAGE -->
@@ -155,6 +166,7 @@
       <div class="sidebar-item" data-cat="sync">同步</div>
       <div class="sidebar-item" data-cat="data">数据管理</div>
       <div class="sidebar-item" data-cat="storage">存储</div>
+      <div class="sidebar-item" data-cat="log">日志</div>
       <div class="sidebar-item" data-cat="about">关于</div>
     </nav>
     <div class="settings-panel" id="settings-panel"></div>
@@ -166,12 +178,17 @@
   <div class="modal" id="edit-modal">
     <h3>编辑密码</h3><button class="modal-close" id="modal-close">✕</button>
     <div class="modal-body">
-      <div class="modal-field"><label>网站</label><input id="edit-website" class="input"></div>
-      <div class="modal-field"><label>别称</label><input id="edit-alias" class="input"></div>
-      <div class="modal-field"><label>账号</label><div class="input-with-btn"><input id="edit-account" class="input"><button class="btn btn-icon btn-small" title="复制账号">📋</button></div></div>
-      <div class="modal-field"><label>密码</label><div class="input-with-btn"><input type="password" id="edit-password" class="input"><button class="btn btn-icon btn-small toggle-password-btn" title="显示">👁</button><button class="btn btn-icon btn-small" title="复制密码">📋</button></div></div>
-      <div class="modal-field"><label>描述</label><input id="edit-description" class="input"></div>
-      <div class="modal-field"><label>归属密码库</label><div class="vault-checkboxes" id="edit-vault-checkboxes"></div></div>
+      <div class="modal-field"><label>网站</label><div class="input-with-btn"><input id="edit-website" class="input"><button class="btn btn-icon btn-small paste-btn" title="从剪贴板粘贴" data-target="edit-website">📋 粘贴</button></div></div>
+      <div class="modal-field"><label>别称</label><div class="input-with-btn"><input id="edit-alias" class="input"><button class="btn btn-icon btn-small paste-btn" title="从剪贴板粘贴" data-target="edit-alias">📋 粘贴</button></div></div>
+      <div class="modal-field"><label>账号</label><div class="input-with-btn"><input id="edit-account" class="input"><button class="btn btn-icon btn-small paste-btn" title="从剪贴板粘贴" data-target="edit-account">📋 粘贴</button><button class="btn btn-icon btn-small copy-btn" title="复制到剪贴板" data-target="edit-account">📝 复制</button></div></div>
+      <div class="modal-field"><label>密码</label><div class="input-with-btn"><input type="password" id="edit-password" class="input"><button class="btn btn-icon btn-small paste-btn" title="从剪贴板粘贴" data-target="edit-password">📋 粘贴</button><button class="btn btn-icon btn-small toggle-password-btn" title="显示密码">👁</button><button class="btn btn-icon btn-small copy-btn" title="复制到剪贴板" data-target="edit-password">📝 复制</button><button class="btn btn-icon btn-small" id="generate-pw-btn" title="生成随机密码">🎲 生成</button></div></div>
+      <div class="modal-field"><label>描述</label><div class="input-with-btn"><input id="edit-description" class="input"><button class="btn btn-icon btn-small paste-btn" title="从剪贴板粘贴" data-target="edit-description">📋 粘贴</button></div></div>
+      <div class="modal-field"><label>归属密码库</label>
+        <div class="vault-dropdown" id="edit-vault-dropdown">
+          <button class="vault-dropdown-toggle" id="vault-dropdown-btn"><span id="vault-dropdown-label">请选择</span> ▾</button>
+          <div class="vault-dropdown-menu" id="vault-dropdown-menu" style="display:none"></div>
+        </div>
+      </div>
       <div class="modal-field"><label><input type="checkbox" id="edit-visible" checked> 在主界面显示</label></div>
     </div>
     <div class="modal-footer">

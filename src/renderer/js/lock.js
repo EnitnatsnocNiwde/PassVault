@@ -86,7 +86,9 @@ function showResetConfirm() {
   document.getElementById('reset-confirm-btn').addEventListener('click', async () => {
     overlay.style.display = 'none';
     await window.api.resetData();
-    window.location.reload();
+    state = { status: 'locked', hasVault: false };
+    showPage('setup');
+    initSetupWizard();
   });
 }
 

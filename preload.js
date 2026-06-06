@@ -25,6 +25,7 @@ contextBridge.exposeInMainWorld('api', {
   exportPlain: (path) => ipcRenderer.invoke('vault:export-plain', path),
   exportEncrypted: (path) => ipcRenderer.invoke('vault:export-encrypted', path),
   importFile: (filePath, type, password) => ipcRenderer.invoke('vault:import', filePath, type, password),
+  importFinalize: (entries, conflictsResolved) => ipcRenderer.invoke('vault:import-finalize', entries, conflictsResolved),
   importResolveConflict: (resolution) => ipcRenderer.invoke('vault:import-resolve', resolution),
 
   changeMasterPassword: (oldPw, newPw) => ipcRenderer.invoke('vault:change-master', oldPw, newPw),
@@ -40,9 +41,15 @@ contextBridge.exposeInMainWorld('api', {
   saveFile: (filters) => ipcRenderer.invoke('dialog:save-file', filters),
 
   copyToClipboard: (text, duration) => ipcRenderer.invoke('clipboard:copy', text, duration),
+  readClipboard: () => ipcRenderer.invoke('clipboard:read'),
   getAppPath: () => ipcRenderer.invoke('app:get-path'),
+  hideWindow: () => ipcRenderer.invoke('app:hide-window'),
+  forceQuit: () => ipcRenderer.invoke('app:force-quit'),
   toggleLog: (enabled) => ipcRenderer.invoke('log:toggle', enabled),
+  getLogDir: () => ipcRenderer.invoke('log:get-dir'),
+  openLogDir: () => ipcRenderer.invoke('log:open-dir'),
 
   onCloseRequest: (callback) => ipcRenderer.on('app:close-request', callback),
+  onLockRequired: (callback) => ipcRenderer.on('app:lock-required', callback),
   onSyncStatus: (callback) => ipcRenderer.on('sync:status', (_, status) => callback(status))
 });

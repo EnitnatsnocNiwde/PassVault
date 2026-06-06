@@ -88,10 +88,9 @@ function showCloseDialog() {
     overlay.style.display = 'none';
     if (remember) await window.api.setSetting('closeBehavior', choice);
     if (choice === 'tray') {
-      window.api.setSetting('_temp_tray', true);
-      window.location.reload();
+      await window.api.hideWindow();
     } else {
-      window.close();
+      await window.api.forceQuit();
     }
   });
 }

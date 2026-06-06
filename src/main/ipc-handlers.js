@@ -1,4 +1,4 @@
-const { ipcMain, dialog, clipboard, BrowserWindow } = require('electron');
+const { ipcMain, dialog, clipboard, BrowserWindow, app } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const vault = require('./vault');
@@ -86,6 +86,13 @@ function setupLockHandler() {
   });
 
   ipcMain.handle('vault:reset-data', async () => {
+    // delete vault files from disk
+    const storagePath = settings.get('storagePath');
+    if (storagePath) {
+      try { if (fs.existsSync(storagePath)) fs.unlinkSync(storagePath); } catch (e) {}
+      try { if (fs.existsSync(storagePath + '.bak')) fs.unlinkSync(storagePath + '.bak'); } catch (e) {}
+      try { if (fs.existsSync(storagePath + '.tmp')) fs.unlinkSync(storagePath + '.tmp'); } catch (e) {}
+    }
     settings.reset();
     vault.resetData();
     autoLock.stop();
@@ -110,7 +117,7 @@ function setupVaultHandlers() {
   ipcMain.handle('vault:add-entry', async (_, entry) => {
     try {
       const result = vault.addEntry(entry);
-      return { success: true, entry: result };
+      return { success: true, entries: result };
     } catch (e) { return { success: false, error: e.message }; }
   });
 
@@ -172,14 +179,30 @@ function setupVaultHandlers() {
   ipcMain.handle('vault:import', async (_, filePath, type, password) => {
     try {
       if (type === 'plain') {
-        const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
-        return { success: true, entries: data.entries, conflicts: [] };
+        const raw = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+        const entries = raw.entries || [];
+        const conflicts = [];
+        const current = vault.state.entries || [];
+        entries.forEach((e, i) => {
+          const dup = current.find(c => c.website === e.website && c.alias === e.alias && c.account === e.account);
+          if (dup) conflicts.push({ index: i, entry: e, existingId: dup.id, existingWebsite: dup.website, existingAlias: dup.alias });
+        });
+        return { success: true, entries, conflicts };
       } else if (type === 'encrypted') {
         const tempVault = Object.create(vault);
         const result = tempVault.unlock(filePath, password);
         if (!result) return { success: false, error: 'WRONG_PASSWORD' };
-        return { success: true, entries: tempVault.data.entries };
+        return { success: true, entries: tempVault.data.entries, conflicts: [] };
       }
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  });
+
+  ipcMain.handle('vault:import-finalize', async (_, entries, conflictsResolved) => {
+    try {
+      const added = vault.importPlain(entries, (vault.state.vaults[0] || {}).id || 1, conflictsResolved);
+      return { success: true, added };
     } catch (e) {
       return { success: false, error: e.message };
     }
@@ -251,6 +274,10 @@ function setupClipboardHandler() {
     }
     return { success: true };
   });
+
+  ipcMain.handle('clipboard:read', async () => {
+    return clipboard.readText();
+  });
 }
 
 function setupAppHandlers() {
@@ -258,10 +285,34 @@ function setupAppHandlers() {
     return path.join(__dirname, '..', '..');
   });
 
+  ipcMain.handle('app:hide-window', async () => {
+    const win = getWin();
+    if (win) win.hide();
+    return { success: true };
+  });
+
+  ipcMain.handle('app:force-quit', async () => {
+    const win = getWin();
+    if (win) win.removeAllListeners('close');
+    app.quit();
+    return { success: true };
+  });
+
   ipcMain.handle('log:toggle', async (_, enabled) => {
     logger.setEnabled(enabled);
     settings.set('logEnabled', enabled);
     logger.info('APP', enabled ? 'Logging enabled' : 'Logging disabled');
+    return { success: true };
+  });
+
+  ipcMain.handle('log:get-dir', async () => {
+    return logger.getLogDir();
+  });
+
+  ipcMain.handle('log:open-dir', async () => {
+    const { shell } = require('electron');
+    const dir = logger.getLogDir();
+    shell.openPath(dir);
     return { success: true };
   });
 }
