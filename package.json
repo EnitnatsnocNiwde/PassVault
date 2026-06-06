@@ -32,6 +32,9 @@
       "preload.js",
       "src/**/*",
       "icon/**/*"
+    ],
+    "asarUnpack": [
+      "node_modules/webdav/**"
     ]
   },
   "dependencies": {
