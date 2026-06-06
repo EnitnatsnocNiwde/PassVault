@@ -2,7 +2,7 @@
   "name": "passvault",
   "version": "1.0.0",
   "description": "Lightweight encrypted password manager",
-  "author": "EnitnatsnocNiwde",
+  "author": "lvivvde",
   "license": "MIT",
   "main": "main.js",
   "scripts": {
