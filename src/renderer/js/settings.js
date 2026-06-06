@@ -1,9 +1,8 @@
 const panels = {
   general: `
     <h3>通用</h3>
-    <div class="setting-row"><label>语言</label><select id="setting-language"><option value="zh-CN">中文</option><option value="en-US">English</option></select></div>
-    <div class="setting-row"><label>主题</label><select id="setting-theme"><option value="dark">深色</option><option value="light">浅色</option></select></div>
     <div class="setting-row"><label>语言</label><select id="setting-language"><option value="zh-CN">简体中文</option><option value="en">English</option></select></div>
+    <div class="setting-row"><label>主题</label><select id="setting-theme"><option value="dark">深色</option><option value="light">浅色</option></select></div>
     <div class="setting-row"><label>界面缩放</label><select id="setting-zoom"><option value="0.9">90%</option><option value="1" selected>100%</option><option value="1.1">110%</option><option value="1.25">125%</option></select></div>
     <div class="setting-row"><label>调试日志</label><input type="checkbox" id="setting-log"></div>`,
 
@@ -14,11 +13,8 @@ const panels = {
     <div class="setting-row"><label>重新生成密钥</label><button class="btn btn-small" id="setting-regenerate-key">重置 →</button></div>
     <div class="setting-row"><label>自动锁屏</label><select id="setting-auto-lock"><option value="5">5 分钟</option><option value="15">15 分钟</option><option value="30" selected>30 分钟</option><option value="60">1 小时</option><option value="120">2 小时</option><option value="0">永不</option></select></div>
     <div class="setting-row"><label>登录错误上限</label><select id="setting-login-limit"><option value="3">3次</option><option value="5" selected>5次</option><option value="7">7次</option><option value="11">11次</option><option value="99">自定义(最多99)</option></select></div>
-    <div class="setting-row"><label>密码明文显示时长</label><select id="setting-reveal-duration"><option value="3" selected>3 秒</option><option value="5">5 秒</option><option value="10">10 秒</option><option value="30">30 秒</option><option value="0">永不隐藏</option></select></div>`,
-
-  clipboard: `
-    <h3>剪切板</h3>
-    <div class="setting-row"><label>自动清除</label><select id="setting-clipboard"><option value="1" selected>1 分钟</option><option value="3">3 分钟</option><option value="5">5 分钟</option><option value="0">不清除</option></select></div>`,
+    <div class="setting-row"><label>密码明文显示时长</label><select id="setting-reveal-duration"><option value="3" selected>3 秒</option><option value="5">5 秒</option><option value="10">10 秒</option><option value="30">30 秒</option><option value="0">永不隐藏</option></select></div>
+    <div class="setting-row"><label>剪切板自动清除</label><select id="setting-clipboard"><option value="1" selected>1 分钟</option><option value="3">3 分钟</option><option value="5">5 分钟</option><option value="0">不清除</option></select></div>`,
 
   shortcuts: `
     <h3>快捷键</h3>
@@ -130,9 +126,8 @@ async function bindPanelEvents(cat) {
     });
     document.getElementById('setting-change-password').addEventListener('click', showChangePassword);
     document.getElementById('setting-regenerate-key').addEventListener('click', showRegenerateKey);
-  }
 
-  if (cat === 'clipboard') {
+    // clipboard (merged into security)
     document.getElementById('setting-clipboard').value = settingsCache.clipboardClearMinutes || 1;
     document.getElementById('setting-clipboard').addEventListener('change', async (e) => {
       await window.api.setSetting('clipboardClearMinutes', parseInt(e.target.value));
