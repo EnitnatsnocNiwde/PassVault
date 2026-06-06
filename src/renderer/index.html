@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PassVault</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/lock.css">
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/settings.css">
+</head>
+<body class="theme-dark">
+
+<!-- LOCK SCREEN -->
+<div id="page-lock" class="page active">
+  <div class="lock-container">
+    <div class="lock-logo">&#x1F512;</div>
+    <h1 class="lock-title">PassVault</h1>
+    <p class="lock-subtitle" data-i18n="lock.enterPassword">Enter master password to unlock</p>
+    <div class="lock-input-group">
+      <input type="password" id="lock-password" class="lock-input" data-i18n-placeholder="lock.passwordPlaceholder" placeholder="Master password" autofocus>
+    </div>
+    <button id="lock-unlock-btn" class="btn btn-primary" data-i18n="lock.unlock">Unlock</button>
+    <p class="lock-error" id="lock-error"></p>
+    <div class="lock-divider"><span data-i18n="lock.or">or</span></div>
+    <p class="lock-subtitle" data-i18n="lock.useRecoveryKey">Unlock with recovery key</p>
+    <div class="lock-input-group">
+      <input type="password" id="lock-key-input" class="lock-input" data-i18n-placeholder="lock.keyPlaceholder" placeholder="Recovery key">
+    </div>
+    <button id="lock-key-btn" class="btn btn-secondary" data-i18n="lock.verifyKey">Verify Key</button>
+    <a href="#" id="lock-reset-link" class="lock-reset" data-i18n="lock.resetData">Reset all data →</a>
+  </div>
+</div>
+
+<!-- SETUP WIZARD -->
+<div id="page-setup" class="page">
+  <div class="setup-container">
+    <div class="setup-steps" id="setup-steps">
+      <span class="step active" data-step="1">1. Master Password</span>
+      <span class="step-arrow">→</span>
+      <span class="step" data-step="2">2. Recovery Key</span>
+      <span class="step-arrow">→</span>
+      <span class="step" data-step="3">3. Storage</span>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="setup-panel active" id="setup-step1">
+      <h2 data-i18n="setup.step1Title">Set Master Password</h2>
+      <p class="setup-hint" data-i18n="setup.step1Hint">At least 4 characters. No complexity requirements.</p>
+      <div class="setup-field">
+        <label data-i18n="setup.password">Master Password</label>
+        <input type="password" id="setup-password" class="input">
+      </div>
+      <div class="setup-field">
+        <label data-i18n="setup.confirmPassword">Confirm Password</label>
+        <input type="password" id="setup-password-confirm" class="input">
+      </div>
+      <p class="setup-error" id="setup-step1-error"></p>
+      <button class="btn btn-primary" id="setup-step1-next" data-i18n="common.next">Next</button>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="setup-panel" id="setup-step2">
+      <h2 data-i18n="setup.step2Title">Set Recovery Key</h2>
+      <p class="setup-warning" data-i18n="setup.step2Warning">This key is shown ONLY ONCE. Save it immediately. If lost, you can reset in settings while unlocked.</p>
+      <div class="setup-radio-group">
+        <label class="radio-label">
+          <input type="radio" name="keyChoice" value="generate" checked>
+          <span data-i18n="setup.generateKey">Auto-generate key</span>
+        </label>
+        <label class="radio-label">
+          <input type="radio" name="keyChoice" value="custom">
+          <span data-i18n="setup.customKey">Custom key (≥8 chars)</span>
+        </label>
+      </div>
+      <div class="setup-field" id="setup-custom-key-group" style="display:none">
+        <input type="text" id="setup-custom-key" class="input" placeholder="Enter custom key (≥8 chars)">
+      </div>
+      <div class="setup-key-display" id="setup-key-display" style="display:none">
+        <p class="setup-key-label" data-i18n="setup.yourKey">Your recovery key:</p>
+        <div class="key-box"><code id="setup-key-value"></code></div>
+        <button class="btn btn-small" id="setup-copy-key" data-i18n="common.copy">Copy</button>
+      </div>
+      <p class="setup-error" id="setup-step2-error"></p>
+      <div class="setup-checkbox" id="setup-saved-check" style="display:none">
+        <label><input type="checkbox" id="setup-key-saved">
+          <span data-i18n="setup.keySaved">I have saved the key and understand it cannot be recovered if lost</span>
+        </label>
+      </div>
+      <button class="btn btn-primary" id="setup-step2-next" disabled data-i18n="common.next">Next</button>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="setup-panel" id="setup-step3">
+      <h2 data-i18n="setup.step3Title">Choose Storage Location</h2>
+      <div class="setup-field">
+        <label data-i18n="setup.storagePath">Vault file location</label>
+        <div class="path-input-group">
+          <input type="text" id="setup-storage-path" class="input" readonly>
+          <button class="btn btn-small" id="setup-pick-path" data-i18n="setup.changePath">Browse</button>
+        </div>
+        <p class="setup-hint" data-i18n="setup.storageHint">Store in a location others cannot access. Cannot use a path with an existing file.</p>
+      </div>
+      <p class="setup-error" id="setup-step3-error"></p>
+      <button class="btn btn-primary" id="setup-finish" data-i18n="setup.finish">Complete & Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN PAGE -->
+<div id="page-main" class="page">
+  <header class="main-header">
+    <img class="header-logo" id="header-logo" src="" alt="PassVault" onerror="this.style.display='none'">
+    <span class="header-title">PassVault</span>
+    <button class="btn-icon" id="main-settings-btn" title="Settings">&#x2699;</button>
+    <button class="btn btn-primary btn-small" id="main-add-btn">+ Add</button>
+  </header>
+  <div class="main-search-bar">
+    <input type="text" id="main-search" class="search-input" placeholder="Search...">
+    <div class="search-toggles">
+      <label class="toggle global-toggle"><input type="checkbox" id="search-global"> Global</label>
+      <button class="toggle-btn active" data-field="website">Website</button>
+      <button class="toggle-btn active" data-field="alias">Alias</button>
+      <button class="toggle-btn active" data-field="account">Account</button>
+      <button class="toggle-btn" data-field="password">&#x1F512; Password</button>
+    </div>
+  </div>
+  <div class="main-table-wrap" id="main-table-wrap">
+    <div class="main-table" id="main-table"></div>
+    <div class="main-empty" id="main-empty" style="display:none">
+      <div class="empty-icon">&#x1F4CB;</div>
+      <p>No entries yet. Click + Add to create your first entry.</p>
+    </div>
+  </div>
+  <footer class="main-footer">
+    <span id="main-count">0 entries</span>
+    <span class="main-sync-status" id="main-sync-status"></span>
+  </footer>
+</div>
+
+<!-- SETTINGS PAGE -->
+<div id="page-settings" class="page">
+  <header class="settings-header">
+    <button class="btn btn-back" id="settings-back-btn">← Back</button>
+    <h2>Settings</h2>
+  </header>
+  <div class="settings-content" id="settings-content">
+    <section>
+      <h3>General</h3>
+      <div class="setting-row"><label>Language</label><select id="setting-language"><option value="zh-CN">中文</option><option value="en-US">English</option></select></div>
+      <div class="setting-row"><label>Theme</label><select id="setting-theme"><option value="dark">Dark</option><option value="light">Light</option></select></div>
+    </section>
+    <section>
+      <h3>Security</h3>
+      <div class="setting-row"><label>Change Master Password</label><button class="btn btn-small" id="setting-change-password">Change →</button></div>
+      <div class="setting-row"><label>Recovery Key</label><span class="key-hint" id="setting-key-hint">--------</span></div>
+      <div class="setting-row"><label>Regenerate Key</label><button class="btn btn-small" id="setting-regenerate-key">Reset →</button></div>
+      <div class="setting-row"><label>Auto-lock</label><select id="setting-auto-lock"><option value="5">5 min</option><option value="15">15 min</option><option value="30" selected>30 min</option><option value="60">1 hour</option><option value="120">2 hours</option><option value="0">Never</option></select></div>
+      <div class="setting-row"><label>Login attempts limit</label><select id="setting-login-limit"><option value="3">3</option><option value="5" selected>5</option><option value="7">7</option><option value="11">11</option><option value="99">Custom (max 99)</option></select></div>
+      <div class="setting-row"><label>Password reveal duration</label><select id="setting-reveal-duration"><option value="3" selected>3 sec</option><option value="5">5 sec</option><option value="10">10 sec</option><option value="30">30 sec</option><option value="0">Never hide</option></select></div>
+    </section>
+    <section>
+      <h3>Clipboard</h3>
+      <div class="setting-row"><label>Auto-clear</label><select id="setting-clipboard"><option value="1" selected>1 min</option><option value="3">3 min</option><option value="5">5 min</option><option value="0">Never</option></select></div>
+    </section>
+    <section>
+      <h3>Keyboard Shortcuts</h3>
+      <div class="setting-row"><input id="shortcut-search" value="Ctrl+F" class="shortcut-input" readonly></div>
+      <div class="setting-row"><input id="shortcut-new" value="Ctrl+N" class="shortcut-input" readonly></div>
+    </section>
+    <section>
+      <h3>Trash</h3>
+      <div class="trash-list" id="trash-list"><p class="trash-empty">Trash is empty</p></div>
+      <button class="btn btn-small btn-danger" id="clear-trash-btn">Clear Trash</button>
+    </section>
+    <section>
+      <h3>Storage</h3>
+      <div class="setting-row"><label>Vault path</label><span class="path-display" id="setting-storage-path"></span><button class="btn btn-small" id="setting-change-path">Change</button></div>
+      <h3>Vaults</h3>
+      <div class="vault-list" id="vault-list"></div>
+      <button class="btn btn-small" id="add-vault-btn">+ New Vault</button>
+    </section>
+    <section>
+      <h3>Sync</h3>
+      <div class="setting-row"><label>Sync mode</label><select id="setting-sync-mode"><option value="none">None</option><option value="webdav">WebDAV</option><option value="folder">Local folder</option></select></div>
+      <div id="sync-webdav-config" style="display:none">
+        <div class="setting-row"><input class="input" placeholder="WebDAV URL" id="setting-webdav-url"></div>
+        <div class="setting-row"><input class="input" placeholder="Username" id="setting-webdav-user"></div>
+        <div class="setting-row"><input type="password" class="input" placeholder="Password" id="setting-webdav-password"></div>
+        <button class="btn btn-small" id="test-webdav-btn">Test Connection</button>
+      </div>
+      <div id="sync-folder-config" style="display:none">
+        <div class="setting-row"><input class="input" id="setting-folder-path" readonly><button class="btn btn-small" id="pick-folder-btn">Browse</button></div>
+      </div>
+    </section>
+    <section>
+      <h3>Data</h3>
+      <button class="btn btn-small" id="export-plain-btn">Export Plain</button>
+      <button class="btn btn-small" id="export-encrypted-btn">Export Encrypted</button>
+      <button class="btn btn-small" id="import-btn">Import</button>
+    </section>
+    <section>
+      <h3>About</h3>
+      <p>PassVault v1.0.0</p>
+    </section>
+  </div>
+</div>
+
+<!-- EDIT MODAL -->
+<div id="modal-overlay" class="modal-overlay" style="display:none">
+  <div class="modal" id="edit-modal">
+    <h3>Edit Entry</h3><button class="modal-close" id="modal-close">✕</button>
+    <div class="modal-body">
+      <div class="modal-field"><label>Website</label><input id="edit-website" class="input"></div>
+      <div class="modal-field"><label>Alias</label><input id="edit-alias" class="input"></div>
+      <div class="modal-field"><label>Account</label><div class="input-with-btn"><input id="edit-account" class="input"><button class="btn btn-icon btn-small copy-account-btn" title="Copy account">📋</button></div></div>
+      <div class="modal-field"><label>Password</label><div class="input-with-btn"><input type="password" id="edit-password" class="input"><button class="btn btn-icon btn-small toggle-password-btn" title="Show">👁</button><button class="btn btn-icon btn-small copy-password-btn" title="Copy password">📋</button></div></div>
+      <div class="modal-field"><label>Description</label><input id="edit-description" class="input"></div>
+      <div class="modal-field"><label>Vaults</label><div class="vault-checkboxes" id="edit-vault-checkboxes"></div></div>
+      <div class="modal-field"><label><input type="checkbox" id="edit-visible" checked> Show on main page</label></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="modal-cancel">Cancel</button>
+      <button class="btn btn-primary" id="modal-save">Save</button>
+      <button class="btn btn-danger" id="modal-delete">🗑 Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div id="delete-confirm-overlay" class="modal-overlay" style="display:none">
+  <div class="modal modal-small">
+    <h3>Confirm Delete</h3>
+    <p>Move this entry to trash? You can restore it later.</p>
+    <button class="btn btn-danger" id="delete-confirm-btn">Delete</button>
+    <button class="btn" id="delete-cancel-btn">Cancel</button>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast" style="display:none"></div>
+
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+<script src="js/lock.js"></script>
+<script src="js/table.js"></script>
+<script src="js/main.js"></script>
+<script src="js/settings.js"></script>
+</body>
+</html>
