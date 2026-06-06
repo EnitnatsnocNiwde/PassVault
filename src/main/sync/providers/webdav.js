@@ -79,6 +79,20 @@ class WebDAVProvider {
       return { exists: false };
     }
   }
+
+  async getRemoteVersion() {
+    try {
+      const cl = await this.getClient();
+      // download only first 1KB to read header
+      const data = await cl.getFileContents('/passvault/vault.pvault', { format: 'text' });
+      if (!data) return { exists: false, version: 0 };
+      const nl = data.indexOf('\n');
+      const hdr = JSON.parse(data.substring(0, nl > 0 ? nl : data.length));
+      return { exists: true, version: hdr.v || 0 };
+    } catch (e) {
+      return { exists: false, version: 0 };
+    }
+  }
 }
 
 module.exports = WebDAVProvider;

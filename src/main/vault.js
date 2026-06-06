@@ -28,6 +28,7 @@ class VaultService {
       vaults: this.data.vaults,
       entries: this.data.entries,
       trash: this.data.trash || [],
+      version: this.data._v || 0,
       recoveryKeyHint: this.recoveryKeyDisplay
         ? `${this.recoveryKeyDisplay.slice(0, 4)}****${this.recoveryKeyDisplay.slice(-4)}`
         : null
@@ -82,6 +83,8 @@ class VaultService {
     const header = this.crypto.exportHeader();
     header.payloadIv = iv;
     header.payloadAuthTag = authTag;
+    header.v = (this.data._v || 0) + 1;
+    this.data._v = header.v;
     const headerJson = JSON.stringify(header);
     const content = headerJson + '\n' + encrypted;
 

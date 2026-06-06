@@ -358,29 +358,31 @@ function setupSyncHandlers() {
   ipcMain.handle('sync:check-update', async () => {
     try {
       const cfg = settings.get('syncConfig') || {};
-      if (!cfg.mode || cfg.mode === 'none') return { hasUpdate: false, reason: '未配置同步' };
+      if (!cfg.mode || cfg.mode === 'none') return { hasUpdate: false };
 
       const vaultPath = settings.get('storagePath');
-      if (!vaultPath) return { hasUpdate: false, reason: '无本地文件' };
+      if (!vaultPath || !fs.existsSync(vaultPath)) return { hasUpdate: false };
 
-      const fs = require('fs');
-      if (!fs.existsSync(vaultPath)) return { hasUpdate: false, reason: '本地文件不存在' };
+      // read local version from header
+      let localVersion = 0;
+      try {
+        const raw = fs.readFileSync(vaultPath, 'utf8');
+        const nl = raw.indexOf('\n');
+        const hdr = JSON.parse(raw.substring(0, nl));
+        localVersion = hdr.v || 0;
+      } catch (e) {}
 
-      const localStat = fs.statSync(vaultPath);
-      const remoteInfo = await sync.getRemoteInfo();
-      if (!remoteInfo.exists) return { hasUpdate: false, reason: '云端无文件' };
-
-      const remoteTime = new Date(remoteInfo.modified).getTime();
-      const localTime = localStat.mtimeMs;
+      // get remote version
+      const rv = await sync.getRemoteVersion();
+      if (!rv.exists) return { hasUpdate: false };
 
       return {
-        hasUpdate: remoteTime > localTime,
-        localTime: new Date(localTime).toISOString(),
-        remoteTime: new Date(remoteTime).toISOString(),
-        remoteSize: remoteInfo.size
+        hasUpdate: rv.version > localVersion,
+        localVersion,
+        remoteVersion: rv.version
       };
     } catch (e) {
-      return { hasUpdate: false, reason: e.message };
+      return { hasUpdate: false };
     }
   });
 }

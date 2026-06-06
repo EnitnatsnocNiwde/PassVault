@@ -56,6 +56,19 @@ class FolderProvider {
       return { exists: false };
     }
   }
+
+  async getRemoteVersion() {
+    try {
+      const p = path.join(this.config.path, 'vault.pvault');
+      if (!fs.existsSync(p)) return { exists: false, version: 0 };
+      const raw = fs.readFileSync(p, 'utf8');
+      const nl = raw.indexOf('\n');
+      const hdr = JSON.parse(raw.substring(0, nl));
+      return { exists: true, version: hdr.v || 0 };
+    } catch (e) {
+      return { exists: false, version: 0 };
+    }
+  }
 }
 
 module.exports = FolderProvider;

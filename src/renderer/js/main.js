@@ -226,9 +226,7 @@ async function checkCloudUpdate() {
     <div class="modal modal-small">
       <h3>云端有更新</h3>
       <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">
-        云端版本更新于 ${new Date(result.remoteTime).toLocaleString()}<br>
-        本地版本: ${new Date(result.localTime).toLocaleString()}<br>
-        云端文件大小: ${(result.remoteSize / 1024).toFixed(1)} KB
+        云端 v${result.remoteVersion} &gt; 本地 v${result.localVersion}
       </p>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px;">
         <button class="btn" id="cloud-skip">跳过</button>
@@ -241,12 +239,8 @@ async function checkCloudUpdate() {
     overlay.style.display = 'none';
     const pull = await window.api.syncPull();
     if (pull.success) {
-      showToast('已下载云端更新，请重新解锁');
-      setTimeout(async () => {
-        await window.api.lock();
-        showPage('lock');
-        initLockScreen();
-      }, 500);
+      showToast('已下载云端 v' + result.remoteVersion);
+      setTimeout(async () => { await window.api.lock(); showPage('lock'); initLockScreen(); }, 500);
     } else {
       showToast('下载失败: ' + (pull.message || ''));
     }

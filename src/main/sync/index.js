@@ -49,6 +49,11 @@ async function getRemoteInfo() {
   return provider.getInfo();
 }
 
+async function getRemoteVersion() {
+  if (!provider) return { exists: false, version: 0 };
+  return provider.getRemoteVersion ? provider.getRemoteVersion() : provider.getInfo();
+}
+
 function startAutoSync(getVaultPath, getWin) {
   if (!provider || syncConfig.mode === 'none') return;
   if (syncTimer) clearInterval(syncTimer);
@@ -103,7 +108,7 @@ function registerProvider(name, factory) {
 }
 
 module.exports = {
-  testConnection, pushVault, pullVault, getRemoteInfo,
+  testConnection, pushVault, pullVault, getRemoteInfo, getRemoteVersion,
   startAutoSync, stopAutoSync, updateConfig, getConfig,
   getProvider, registerProvider
 };
