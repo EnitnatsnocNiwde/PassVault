@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>PassVault 风格对比</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #1a1a2e; display: flex; flex-direction: column; height: 100vh; }
+.tabs { display: flex; background: #0f0f1a; padding: 6px 8px; gap: 4px; flex-shrink: 0; overflow-x: auto; }
+.tab { padding: 8px 16px; border: none; border-radius: 8px; font-size: 12px; cursor: pointer; color: #888; background: transparent; white-space: nowrap; transition: .2s; }
+.tab:hover { color: #ccc; }
+.tab.active { background: #2a2a3e; color: #7c83ff; font-weight: 600; }
+.panel { flex:1; display: none; align-items: center; justify-content: center; padding: 30px; }
+.panel.active { display: flex; }
+.panel-body { display: flex; gap: 40px; align-items: flex-start; max-width: 800px; width: 100%; }
+.card { text-align: center; width: 320px; flex-shrink: 0; }
+.card-title { margin: 4px 0; }
+.card-sub { margin-bottom: 14px; }
+.inp { width: 100%; margin-bottom: 8px; outline: none; }
+.btn { width: 100%; cursor: pointer; margin-bottom: 6px; }
+.divider { margin: 10px 0; }
+.table-wrap { flex:1; min-width: 280px; overflow: hidden; }
+.t-h { display: flex; }
+.t-r { display: flex; }
+.t-w { flex: 1.2; } .t-m { flex: 1; } .t-s { flex: 1; text-align: center; }
+
+/* Style 1: Current */
+.s1 { background: linear-gradient(150deg, #e8e4dc 0%, #f0ece6 100%); }
+.s1 .card { background: #f5f0e8; border: 1px solid #ddd; border-radius: 8px; padding: 32px 28px; }
+.s1 .card-title { font-size: 20px; color: #333; }
+.s1 .card-sub { font-size: 12px; color: #888; }
+.s1 .inp { padding: 8px 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 13px; background: #fff; }
+.s1 .btn { padding: 8px; border: none; border-radius: 6px; font-size: 13px; }
+.s1 .btn-p { background: #5c64e0; color: #fff; }
+.s1 .btn-s { background: #ccc; color: #555; }
+.s1 .divider { font-size: 11px; color: #ccc; }
+.s1 .table-wrap { background: #fff; border: 1px solid #ddd; border-radius: 6px; }
+.s1 .t-h { padding: 8px 12px; border-bottom: 1px solid #ddd; background: #fafafa; font-size: 11px; color: #888; font-weight: 600; }
+.s1 .t-r { padding: 7px 12px; border-bottom: 1px solid #eee; font-size: 12px; color: #555; }
+
+/* Style 2: Pure CSS */
+.s2 { background: linear-gradient(150deg, #f0f4ff 0%, #faf8f5 60%); }
+.s2 .card { background: rgba(255,255,255,0.7); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.85); border-radius: 20px; padding: 34px 30px; box-shadow: 0 8px 32px rgba(0,0,0,0.06),0 2px 8px rgba(0,0,0,0.04); }
+.s2 .card-title { font-size: 21px; font-weight: 700; color: #1a1a2e; }
+.s2 .card-sub { font-size: 12px; color: #999; }
+.s2 .inp { padding: 10px 14px; border: 1.5px solid #e0e0e8; border-radius: 12px; font-size: 13px; background: #fff; transition: .2s; }
+.s2 .inp:focus { border-color: #5c64e0; box-shadow: 0 0 0 3px rgba(92,100,224,0.12); }
+.s2 .btn { padding: 10px; border: none; border-radius: 12px; font-size: 14px; font-weight: 500; transition: .2s; }
+.s2 .btn-p { background: linear-gradient(135deg, #5c64e0, #7c83ff); color: #fff; box-shadow: 0 4px 14px rgba(92,100,224,0.35); }
+.s2 .btn-p:hover { transform: translateY(-1px); }
+.s2 .btn-s { background: rgba(0,0,0,0.04); color: #666; }
+.s2 .btn-s:hover { background: rgba(0,0,0,0.08); }
+.s2 .divider { font-size: 11px; color: #ccc; }
+.s2 .table-wrap { background: rgba(255,255,255,0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.85); border-radius: 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.05); }
+.s2 .t-h { padding: 10px 14px; border-bottom: 1.5px solid #e8e8ee; background: rgba(0,0,0,0.02); font-size: 11px; color: #888; font-weight: 600; }
+.s2 .t-r { padding: 8px 14px; border-bottom: 1px solid #f0f0f5; font-size: 12px; color: #444; transition: .15s; }
+.s2 .t-r:hover { background: rgba(92,100,224,0.04); }
+
+/* Style 3: Pico */
+.s3 { background: #f8f9fa; }
+.pico-wrap { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 4px 16px rgba(0,0,0,0.06); width: 320px; }
+
+/* Style 4: Modern Dark */
+.s4 { background: #0f0f1a; }
+.s4 .card { background: rgba(255,255,255,0.04); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 34px 30px; }
+.s4 .card-title { font-size: 21px; font-weight: 700; color: #eaeaee; }
+.s4 .card-sub { font-size: 12px; color: #666; }
+.s4 .inp { padding: 10px 14px; border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; font-size: 13px; background: rgba(255,255,255,0.05); color: #ddd; transition: .2s; }
+.s4 .inp:focus { border-color: #7c83ff; box-shadow: 0 0 0 3px rgba(124,131,255,0.15); }
+.s4 .inp::placeholder { color: #555; }
+.s4 .btn { padding: 10px; border: none; border-radius: 12px; font-size: 14px; font-weight: 500; transition: .2s; }
+.s4 .btn-p { background: linear-gradient(135deg, #5c64e0, #7c83ff); color: #fff; }
+.s4 .btn-s { background: rgba(255,255,255,0.06); color: #999; }
+.s4 .divider { font-size: 11px; color: #333; }
+.s4 .table-wrap { background: rgba(255,255,255,0.03); backdrop-filter: blur(40px); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; }
+.s4 .t-h { padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,0.08); background: rgba(255,255,255,0.02); font-size: 11px; color: #666; font-weight: 600; }
+.s4 .t-r { padding: 8px 14px; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; color: #aaa; transition: .15s; }
+.s4 .t-r:hover { background: rgba(255,255,255,0.03); }
+
+/* Style 5: Tailwind */
+.s5 { background: #f8fafc; }
+.tw-card { background: #fff; border-radius: 16px; padding: 32px; width: 320px; box-shadow: 0 10px 25px -5px rgba(99,102,241,0.1), 0 4px 10px rgba(0,0,0,0.04); border: 1px solid #eef2ff; text-align: center; }
+
+/* Style 6: shadcn */
+.s6 { background: #09090b; }
+.shad-card { background: rgba(24,24,27,0.95); backdrop-filter: blur(12px); border: 1px solid rgba(39,39,42,0.8); border-radius: 14px; padding: 32px 28px; width: 320px; text-align: center; }
+</style>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css">
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body>
+
+<div class="tabs" id="tabs">
+  <button class="tab active" data-id="s1">1. 当前风格</button>
+  <button class="tab" data-id="s2">2. 纯CSS升级</button>
+  <button class="tab" data-id="s3">3. Pico CSS</button>
+  <button class="tab" data-id="s4">4. 现代暗色</button>
+  <button class="tab" data-id="s5">5. Tailwind</button>
+  <button class="tab" data-id="s6">6. shadcn 暗色</button>
+</div>
+
+<!-- === S1: Current === -->
+<div class="panel active s1" id="p1"><div class="panel-body">
+  <div class="card"><div style="font-size:34px;margin-bottom:4px">🔒</div><div class="card-title">密码保管箱</div><div class="card-sub">请输入主密码解锁</div>
+    <input class="inp" type="password" placeholder="主密码" value="••••••••"><button class="btn btn-p">解锁</button><div class="divider">———— 或 ————</div>
+    <input class="inp" placeholder="恢复密钥"><button class="btn btn-s">验证密钥</button></div>
+  <div class="table-wrap"><div class="t-h"><span class="t-s">ID</span><span class="t-w">网站</span><span class="t-m">别称</span><span class="t-m">账号</span><span class="t-s">密码</span><span class="t-m">描述</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">1</span><span class="t-w">github.com</span><span class="t-m">GitHub</span><span class="t-m">user@mail.com</span><span class="t-s">****</span><span class="t-m">开发账号</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">2</span><span class="t-w">google.com</span><span class="t-m">Google</span><span class="t-m">user@mail.com</span><span class="t-s">****</span><span class="t-m">-</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">3</span><span class="t-w">notion.so</span><span class="t-m">Notion</span><span class="t-m">user@mail.com</span><span class="t-s">****</span><span class="t-m">笔记</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">4</span><span class="t-w">slack.com</span><span class="t-m">Slack</span><span class="t-m">user@mail.com</span><span class="t-s">****</span><span class="t-m">团队</span></div>
+  </div>
+</div></div>
+
+<!-- === S2: Pure CSS === -->
+<div class="panel s2" id="p2"><div class="panel-body">
+  <div class="card"><div style="font-size:36px;margin-bottom:4px">🔒</div><div class="card-title">密码保管箱</div><div class="card-sub">请输入主密码解锁</div>
+    <input class="inp" type="password" placeholder="主密码" value="••••••••"><button class="btn btn-p">解锁</button><div class="divider">———— 或 ————</div>
+    <input class="inp" placeholder="恢复密钥"><button class="btn btn-s">验证密钥</button></div>
+  <div class="table-wrap"><div class="t-h"><span class="t-s">ID</span><span class="t-w">网站</span><span class="t-m">别称</span><span class="t-m">账号</span><span class="t-s">密码</span><span class="t-m">描述</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">1</span><span class="t-w">github.com</span><span class="t-m">GitHub</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">开发账号</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">2</span><span class="t-w">google.com</span><span class="t-m">Google</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">-</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">3</span><span class="t-w">notion.so</span><span class="t-m">Notion</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">笔记</span></div>
+    <div class="t-r"><span class="t-s" style="color:#aaa">4</span><span class="t-w">slack.com</span><span class="t-m">Slack</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">团队</span></div>
+  </div>
+</div></div>
+
+<!-- === S3: Pico === -->
+<div class="panel s3" id="p3"><div class="panel-body">
+  <article class="pico-wrap"><div style="font-size:34px;text-align:center">🔒</div><h3 style="text-align:center;margin:4px 0">密码保管箱</h3><p style="text-align:center;font-size:12px;color:var(--pico-muted-color)">请输入主密码解锁</p>
+    <input type="password" placeholder="主密码" value="••••••••" style="margin-bottom:10px"><button class="contrast" style="width:100%;margin-bottom:6px">解锁</button>
+    <hr style="margin:12px 0"><input type="text" placeholder="恢复密钥" style="margin-bottom:10px"><button class="outline" style="width:100%">验证密钥</button></article>
+  <div style="flex:1;min-width:280px;border:1px solid var(--pico-muted-border-color);border-radius:var(--pico-border-radius);overflow:hidden">
+    <table class="striped" style="margin:0;font-size:12px"><thead><tr><th>ID</th><th>网站</th><th>别称</th><th>账号</th><th>密码</th><th>描述</th></tr></thead>
+      <tbody><tr><td>1</td><td>github.com</td><td>GitHub</td><td>user@mail.com</td><td>****</td><td>开发账号</td></tr>
+      <tr><td>2</td><td>google.com</td><td>Google</td><td>user@mail.com</td><td>****</td><td>-</td></tr>
+      <tr><td>3</td><td>notion.so</td><td>Notion</td><td>user@mail.com</td><td>****</td><td>笔记</td></tr>
+      <tr><td>4</td><td>slack.com</td><td>Slack</td><td>user@mail.com</td><td>****</td><td>团队</td></tr></tbody></table></div>
+</div></div>
+
+<!-- === S4: Dark === -->
+<div class="panel s4" id="p4"><div class="panel-body">
+  <div class="card"><div style="font-size:36px;margin-bottom:4px">🔒</div><div class="card-title">密码保管箱</div><div class="card-sub">请输入主密码解锁</div>
+    <input class="inp" type="password" placeholder="主密码" value="••••••••"><button class="btn btn-p">解锁</button><div class="divider">———— 或 ————</div>
+    <input class="inp" placeholder="恢复密钥"><button class="btn btn-s">验证密钥</button></div>
+  <div class="table-wrap"><div class="t-h"><span class="t-s">ID</span><span class="t-w">网站</span><span class="t-m">别称</span><span class="t-m">账号</span><span class="t-s">密码</span><span class="t-m">描述</span></div>
+    <div class="t-r"><span class="t-s" style="color:#555">1</span><span class="t-w">github.com</span><span class="t-m">GitHub</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">开发账号</span></div>
+    <div class="t-r"><span class="t-s" style="color:#555">2</span><span class="t-w">google.com</span><span class="t-m">Google</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">-</span></div>
+    <div class="t-r"><span class="t-s" style="color:#555">3</span><span class="t-w">notion.so</span><span class="t-m">Notion</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">笔记</span></div>
+    <div class="t-r"><span class="t-s" style="color:#555">4</span><span class="t-w">slack.com</span><span class="t-m">Slack</span><span class="t-m">user@mail.com</span><span class="t-s" style="color:#7c83ff;font-family:monospace">****</span><span class="t-m">团队</span></div>
+  </div>
+</div></div>
+
+<!-- === S5: Tailwind === -->
+<div class="panel s5" id="p5"><div class="panel-body">
+  <div class="tw-card"><div class="text-3xl mb-1">🔒</div><div class="text-xl font-semibold text-slate-800 mb-1">密码保管箱</div><div class="text-sm text-slate-400 mb-4">请输入主密码解锁</div>
+    <input type="password" placeholder="主密码" value="••••••••" class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl mb-3 focus:outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100 transition">
+    <button class="w-full py-2.5 bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-medium rounded-xl transition mb-1 shadow-lg shadow-indigo-200">解锁</button>
+    <div class="text-xs text-slate-300 my-3">———— 或 ————</div>
+    <input placeholder="恢复密钥" class="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl mb-3 focus:outline-none focus:border-indigo-400 transition">
+    <button class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 text-sm font-medium rounded-xl transition">验证密钥</button></div>
+  <div class="flex-1 min-w-0 bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+    <div class="flex px-4 py-2.5 border-b border-slate-100 bg-slate-50/50 text-xs font-semibold text-slate-400"><span class="flex-1 text-center">ID</span><span class="flex-[1.2]">网站</span><span class="flex-1">别称</span><span class="flex-1">账号</span><span class="flex-1 text-center">密码</span><span class="flex-1">描述</span></div>
+    <div class="flex px-4 py-2.5 border-b border-slate-50 text-sm text-slate-600 hover:bg-indigo-50/30 transition"><span class="flex-1 text-center text-slate-400">1</span><span class="flex-[1.2]">github.com</span><span class="flex-1">GitHub</span><span class="flex-1">user@mail.com</span><span class="flex-1 text-center font-mono text-indigo-400">****</span><span class="flex-1">开发</span></div>
+    <div class="flex px-4 py-2.5 border-b border-slate-50 text-sm text-slate-600 hover:bg-indigo-50/30 transition"><span class="flex-1 text-center text-slate-400">2</span><span class="flex-[1.2]">google.com</span><span class="flex-1">Google</span><span class="flex-1">user@mail.com</span><span class="flex-1 text-center font-mono text-indigo-400">****</span><span class="flex-1">-</span></div>
+    <div class="flex px-4 py-2.5 border-b border-slate-50 text-sm text-slate-600 hover:bg-indigo-50/30 transition"><span class="flex-1 text-center text-slate-400">3</span><span class="flex-[1.2]">notion.so</span><span class="flex-1">Notion</span><span class="flex-1">user@mail.com</span><span class="flex-1 text-center font-mono text-indigo-400">****</span><span class="flex-1">笔记</span></div>
+    <div class="flex px-4 py-2.5 text-sm text-slate-600 hover:bg-indigo-50/30 transition"><span class="flex-1 text-center text-slate-400">4</span><span class="flex-[1.2]">slack.com</span><span class="flex-1">Slack</span><span class="flex-1">user@mail.com</span><span class="flex-1 text-center font-mono text-indigo-400">****</span><span class="flex-1">团队</span></div>
+  </div>
+</div></div>
+
+<!-- === S6: shadcn === -->
+<div class="panel s6" id="p6"><div class="panel-body">
+  <div class="shad-card"><div style="font-size:36px;margin-bottom:4px">🔒</div><div style="font-size:21px;font-weight:600;color:#fafafa;margin:4px 0">密码保管箱</div><div style="font-size:12px;color:#71717a;margin-bottom:16px">请输入主密码解锁</div>
+    <input type="password" placeholder="主密码" value="••••••••" style="width:100%;padding:10px 14px;border:1px solid #27272a;border-radius:8px;font-size:13px;background:#09090b;color:#fafafa;margin-bottom:10px;outline:none;transition:.15s" onfocus="this.style.borderColor='#818cf8';this.style.boxShadow='0 0 0 2px rgba(129,140,248,0.25)'" onblur="this.style.borderColor='#27272a';this.style.boxShadow='none'">
+    <button style="width:100%;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:500;background:#fafafa;color:#09090b;cursor:pointer;margin-bottom:6px">解锁</button>
+    <div style="font-size:11px;color:#3f3f46;margin:12px 0">———— 或 ————</div>
+    <input placeholder="恢复密钥" style="width:100%;padding:10px 14px;border:1px solid #27272a;border-radius:8px;font-size:13px;background:#09090b;color:#fafafa;margin-bottom:10px;outline:none" onfocus="this.style.borderColor='#818cf8'" onblur="this.style.borderColor='#27272a'">
+    <button style="width:100%;padding:10px;border:none;border-radius:8px;font-size:14px;font-weight:500;background:#27272a;color:#a1a1aa;cursor:pointer">验证密钥</button></div>
+  <div style="flex:1;min-width:0;background:rgba(24,24,27,0.95);border:1px solid #27272a;border-radius:14px;overflow:hidden">
+    <div style="display:flex;padding:10px 14px;border-bottom:1px solid #27272a;font-size:11px;color:#71717a;font-weight:500"><span style="flex:1;text-align:center">ID</span><span style="flex:1.2">网站</span><span style="flex:1">别称</span><span style="flex:1">账号</span><span style="flex:1;text-align:center">密码</span><span style="flex:1">描述</span></div>
+    <div style="display:flex;padding:8px 14px;border-bottom:1px solid #1f1f23;font-size:12px;color:#d4d4d8;transition:.15s" onmouseover="this.style.background='rgba(129,140,248,0.04)'" onmouseout="this.style.background='transparent'"><span style="flex:1;text-align:center;color:#52525b">1</span><span style="flex:1.2">github.com</span><span style="flex:1">GitHub</span><span style="flex:1">user@mail.com</span><span style="flex:1;text-align:center;color:#818cf8;font-family:monospace">****</span><span style="flex:1">开发</span></div>
+    <div style="display:flex;padding:8px 14px;border-bottom:1px solid #1f1f23;font-size:12px;color:#d4d4d8;transition:.15s" onmouseover="this.style.background='rgba(129,140,248,0.04)'" onmouseout="this.style.background='transparent'"><span style="flex:1;text-align:center;color:#52525b">2</span><span style="flex:1.2">google.com</span><span style="flex:1">Google</span><span style="flex:1">user@mail.com</span><span style="flex:1;text-align:center;color:#818cf8;font-family:monospace">****</span><span style="flex:1">-</span></div>
+    <div style="display:flex;padding:8px 14px;border-bottom:1px solid #1f1f23;font-size:12px;color:#d4d4d8;transition:.15s" onmouseover="this.style.background='rgba(129,140,248,0.04)'" onmouseout="this.style.background='transparent'"><span style="flex:1;text-align:center;color:#52525b">3</span><span style="flex:1.2">notion.so</span><span style="flex:1">Notion</span><span style="flex:1">user@mail.com</span><span style="flex:1;text-align:center;color:#818cf8;font-family:monospace">****</span><span style="flex:1">笔记</span></div>
+    <div style="display:flex;padding:8px 14px;font-size:12px;color:#d4d4d8;transition:.15s" onmouseover="this.style.background='rgba(129,140,248,0.04)'" onmouseout="this.style.background='transparent'"><span style="flex:1;text-align:center;color:#52525b">4</span><span style="flex:1.2">slack.com</span><span style="flex:1">Slack</span><span style="flex:1">user@mail.com</span><span style="flex:1;text-align:center;color:#818cf8;font-family:monospace">****</span><span style="flex:1">团队</span></div>
+  </div>
+</div></div>
+
+<script>
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('p' + tab.dataset.id.slice(1)).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>
