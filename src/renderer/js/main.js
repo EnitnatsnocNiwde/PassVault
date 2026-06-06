@@ -368,16 +368,24 @@ function markUnsaved() {
 }
 
 let editingId = null;
+let editingOriginal = {}; // original values to detect changes
+
 async function showEditModal(id = null) {
   editingId = id;
+  editingOriginal = {};
   const overlay = document.getElementById('modal-overlay');
   overlay.style.display = 'flex';
 
   // click outside to close
   overlay.onclick = (e) => {
     if (e.target === overlay) {
-      const hasContent = editingId || document.getElementById('edit-website').value || document.getElementById('edit-account').value || document.getElementById('edit-password').value;
-      if (!hasContent) { closeEditModal(); return; }
+      const changed = document.getElementById('edit-website').value !== editingOriginal.website
+        || document.getElementById('edit-alias').value !== editingOriginal.alias
+        || document.getElementById('edit-account').value !== editingOriginal.account
+        || document.getElementById('edit-password').value !== editingOriginal.password
+        || document.getElementById('edit-description').value !== editingOriginal.description
+        || document.getElementById('edit-visible').checked !== editingOriginal.visible;
+      if (!changed) { closeEditModal(); return; }
       // custom confirm
       const confirmOverlay = document.getElementById('delete-confirm-overlay');
       confirmOverlay.style.display = 'flex';
@@ -460,6 +468,16 @@ async function showEditModal(id = null) {
     document.getElementById('edit-description').value = '';
     document.getElementById('edit-visible').checked = true;
   }
+
+  // save original values to detect changes
+  editingOriginal = {
+    website: document.getElementById('edit-website').value,
+    alias: document.getElementById('edit-alias').value,
+    account: document.getElementById('edit-account').value,
+    password: document.getElementById('edit-password').value,
+    description: document.getElementById('edit-description').value,
+    visible: document.getElementById('edit-visible').checked
+  };
 
   // paste buttons
   document.querySelectorAll('.paste-btn').forEach(btn => {
