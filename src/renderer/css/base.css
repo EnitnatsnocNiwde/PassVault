@@ -4,6 +4,11 @@ body {
   font-size: 13px; line-height: 1.6;
   overflow: hidden; user-select: none;
   height: 100vh;
+  background-color: var(--bg-primary);
+  background-image: url('../assets/bg.png');
+  background-size: cover;
+  background-position: center;
+  background-blend-mode: overlay;
 }
 
 :root {
