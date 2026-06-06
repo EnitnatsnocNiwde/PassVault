@@ -1,14 +1,20 @@
 const fs = require('fs');
 const path = require('path');
-const electron = require('electron');
 
-const LOG_DIR = path.join(electron.app.getPath('userData'), 'logs');
-
+let LOG_DIR = null;
 let enabled = false;
 
+function getLogDir() {
+  if (LOG_DIR) return LOG_DIR;
+  const electron = require('electron');
+  LOG_DIR = path.join(electron.app.getPath('userData'), 'logs');
+  return LOG_DIR;
+}
+
 function ensureDir() {
-  if (!fs.existsSync(LOG_DIR)) {
-    fs.mkdirSync(LOG_DIR, { recursive: true });
+  const dir = getLogDir();
+  if (!fs.existsSync(dir)) {
+    fs.mkdirSync(dir, { recursive: true });
   }
 }
 
@@ -17,7 +23,7 @@ function todayFile() {
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
-  return path.join(LOG_DIR, `${yyyy}-${mm}-${dd}.log`);
+  return path.join(getLogDir(), `${yyyy}-${mm}-${dd}.log`);
 }
 
 function timestamp() {

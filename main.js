@@ -1,6 +1,6 @@
 const electron = require('electron');
 const path = require('path');
-const { registerIpcHandlers } = require('./src/main/ipc-handlers');
+const path = require('path');
 
 const { app, BrowserWindow } = electron;
 
@@ -52,6 +52,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  const { registerIpcHandlers } = require('./src/main/ipc-handlers');
   registerIpcHandlers(() => mainWindow);
   createWindow();
 });

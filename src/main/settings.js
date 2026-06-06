@@ -9,7 +9,7 @@ const DEFAULTS = {
   loginAttemptLimit: 5,
   passwordRevealSeconds: 3,
   clipboardClearMinutes: 1,
-  logEnabled: false,
+  logEnabled: true,
   storagePath: '',
   syncMode: 'none',
   webdav: { url: '', username: '', encryptedPassword: '' },
@@ -26,14 +26,20 @@ const DEFAULTS = {
   windowBounds: { width: 900, height: 620 }
 };
 
-const settingsPath = path.join(electron.app.getPath('userData'), 'settings.json');
-
 let settings = null;
+let _settingsPath = null;
+
+function getSettingsPath() {
+  if (_settingsPath) return _settingsPath;
+  _settingsPath = path.join(electron.app.getPath('userData'), 'settings.json');
+  return _settingsPath;
+}
 
 function load() {
   try {
-    if (fs.existsSync(settingsPath)) {
-      const raw = fs.readFileSync(settingsPath, 'utf8');
+    const sp = getSettingsPath();
+    if (fs.existsSync(sp)) {
+      const raw = fs.readFileSync(sp, 'utf8');
       settings = { ...DEFAULTS, ...JSON.parse(raw) };
     } else {
       settings = { ...DEFAULTS };
@@ -46,9 +52,10 @@ function load() {
 }
 
 function save() {
-  const dir = path.dirname(settingsPath);
+  const sp = getSettingsPath();
+  const dir = path.dirname(sp);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(settingsPath, JSON.stringify(settings, null, 2), 'utf8');
+  fs.writeFileSync(sp, JSON.stringify(settings, null, 2), 'utf8');
 }
 
 function get(key) {
@@ -69,7 +76,7 @@ function getAll() {
 
 function reset() {
   settings = { ...DEFAULTS };
-  try { fs.unlinkSync(settingsPath); } catch (e) {}
+  try { fs.unlinkSync(getSettingsPath()); } catch (e) {}
 }
 
-module.exports = { load, save, get, set, getAll, reset, DEFAULTS, settingsPath };
+module.exports = { load, save, get, set, getAll, reset, DEFAULTS, getSettingsPath };
