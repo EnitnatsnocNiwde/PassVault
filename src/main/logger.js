@@ -51,7 +51,7 @@ const logger = {
 
   vault(method, detail) { write('VAULT', method, detail); },
   crypto(method, detail) { write('CRYPTO', method, detail); },
-  sync(method, detail) { write('SYNC', method, detail); },
+  sync(method, detail) { write('SYNC', 'SYNC', method, detail); },
   lock(method, detail) { write('LOCK', method, detail); },
   ipc(channel, detail) { write('IPC', channel, detail); }
 };

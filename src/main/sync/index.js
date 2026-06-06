@@ -24,7 +24,7 @@ function createProvider(config) {
 
 async function testConnection(config) {
   const p = createProvider(config);
-  if (!p) return { success: false, message: '不支持的同步方式' };
+  if (!p) return { success: false, message: '暂不支持这种同步方式，请选择 WebDAV 或本地文件夹' };
   return p.test();
 }
 
@@ -36,8 +36,8 @@ async function testConnection(config) {
  *   { action: 'none'|'upload'|'download'|'conflict', reason, ... }
  */
 async function compare(localMeta, vaultPath, remoteDecrypt) {
-  if (!provider) return { action: 'none', reason: '未配置同步' };
-  if (syncConfig.mode === 'none') return { action: 'none', reason: '同步未启用' };
+  if (!provider) return { action: 'none', reason: '尚未配置云同步，请先在设置中填写同步信息' };
+  if (syncConfig.mode === 'none') return { action: 'none', reason: '云同步功能未开启，请在设置中启用' };
 
   const localExists = !!vaultPath && fs.existsSync(vaultPath);
   const remote = await getRemoteMeta();
@@ -45,17 +45,17 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
 
   // 5.1 Both missing
   if (!localExists && !remoteExists) {
-    return { action: 'none', reason: '本地和云端均无文件' };
+    return { action: 'none', reason: '本地还没有密码库，云端也没有备份文件' };
   }
 
   // 5.2 Local exists, remote missing
   if (localExists && !remoteExists) {
-    return { action: 'upload', reason: '云端无文件', safeAuto: true };
+    return { action: 'upload', reason: '云端还没有备份，正在上传本地密码库...', safeAuto: true };
   }
 
   // 5.3 Local missing, remote exists
   if (!localExists && remoteExists) {
-    return { action: 'download', reason: '本地无文件', safeAuto: true };
+    return { action: 'download', reason: '检测到云端有密码库备份，正在恢复到本地...', safeAuto: true };
   }
 
   // 5.4 Both exist — complex comparison
@@ -63,7 +63,7 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
   // §3 key verification
   const canDecryptRemote = remoteDecrypt ? remoteDecrypt.canDecrypt : true;
   if (!canDecryptRemote) {
-    return { action: 'conflict', reason: '密钥不匹配',
+    return { action: 'conflict', reason: '当前密钥无法解密云端文件，可能是在其他设备上使用了不同的主密码',
       type: 'key_mismatch',
       canDecryptLocal: !!localMeta,
       canDecryptRemote: false };
@@ -71,12 +71,12 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
 
   // §6 vaultId check
   if (localMeta.vaultId && remote.vaultId && localMeta.vaultId !== remote.vaultId) {
-    return { action: 'conflict', reason: 'vaultId不一致', type: 'different_vault' };
+    return { action: 'conflict', reason: '本地和云端属于不同的密码库，无法自动合并', type: 'different_vault' };
   }
 
   // 7. contentHash check
   if (localMeta.contentHash && remote.contentHash && localMeta.contentHash === remote.contentHash) {
-    return { action: 'none', reason: '内容一致', safeAuto: true };
+    return { action: 'none', reason: '本地和云端内容完全一致，无需同步', safeAuto: true };
   }
 
   const lv = localMeta.version || 0;
@@ -94,14 +94,14 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
       const remoteCount = remote.itemCount || 0;
       const deleted = remoteCount - localCount;
       if (remoteCount > 0 && (deleted >= 5 || deleted / remoteCount >= 0.3)) {
-        return { action: 'conflict', reason: '大量删除风险', type: 'mass_delete',
+        return { action: 'conflict', reason: '本地删除了较多密码条目，为防止误删请确认', type: 'mass_delete',
           localCount, remoteCount, deleted };
       }
-      return { action: 'upload', reason: '本地更新', safeAuto: true,
+      return { action: 'upload', reason: '本地有新的修改，正在同步到云端...', safeAuto: true,
         localVersion: lv, remoteVersion: rv };
     }
     // 9.2 Conflict: both modified
-    return { action: 'conflict', reason: '本地和云端都发生过修改',
+    return { action: 'conflict', reason: '本地和云端都有新的修改，需要你来决定保留哪一份',
       type: 'both_modified',
       localVersion: lv, remoteVersion: rv, lastSyncVersion: lSync };
   }
@@ -110,20 +110,20 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
   if (rv > lv) {
     // 10.1 Safe download (no local changes since last sync, or never synced)
     if (lv === lSync || lSync === 0) {
-      return { action: 'download', reason: '云端更新', safeAuto: true,
+      return { action: 'download', reason: '云端有新的更新，正在下载到本地...', safeAuto: true,
         localVersion: lv, remoteVersion: rv };
     }
     // 10.2 Conflict
-    return { action: 'conflict', reason: '双方都修改过', type: 'both_modified',
+    return { action: 'conflict', reason: '本地和云端各自有修改，无法自动合并', type: 'both_modified',
       localVersion: lv, remoteVersion: rv, lastSyncVersion: lSync };
   }
 
   // 11. Same version but content differs
   if (lSync === 0) {
-    return { action: 'upload', reason: '首次同步', safeAuto: true,
+    return { action: 'upload', reason: '这是首次同步，正在将本地密码库上传到云端...', safeAuto: true,
       localVersion: lv, remoteVersion: rv };
   }
-  return { action: 'conflict', reason: '版本相同内容不同', type: 'hash_mismatch',
+  return { action: 'conflict', reason: '本地和云端版本号相同但内容不一致，可能是多设备同时修改导致的', type: 'hash_mismatch',
     localVersion: lv, remoteVersion: rv };
 }
 
