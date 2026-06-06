@@ -83,6 +83,8 @@ async function compare(localMeta, vaultPath, remoteDecrypt) {
   const rv = remote.version || 0;
   const lSync = localMeta.lastSyncVersion || 0;
 
+  logger.sync('COMPARE', { lv, rv, lSync, localHash: localMeta.contentHash?.slice(0,8), remoteHash: remote.contentHash?.slice(0,8) });
+
   // 9. Local > Remote
   if (lv > rv) {
     // 9.1 First sync (lSync===0) or safe upload
