@@ -161,6 +161,22 @@ function bindPanelEvents(cat) {
     if (syncCfg.password) document.getElementById('setting-webdav-password').value = syncCfg.password;
     document.getElementById('setting-sync-interval').value = syncCfg.interval || 15;
 
+    // folder sync config
+    if (syncCfg.path) document.getElementById('setting-folder-path').value = syncCfg.path;
+    document.getElementById('pick-folder-btn').addEventListener('click', async () => {
+      const folder = await window.api.pickFolder();
+      if (folder) {
+        document.getElementById('setting-folder-path').value = folder;
+        await window.api.syncConfig({ mode: 'folder', path: folder, interval: parseInt(document.getElementById('setting-sync-interval').value) });
+        showToast('同步文件夹已设置');
+      }
+    });
+
+    if (mode.value === 'folder' && syncCfg.path) {
+      // auto-activate folder sync on panel open
+      window.api.syncConfig({ mode: 'folder', path: syncCfg.path, interval: syncCfg.interval || 15 });
+    }
+
     document.getElementById('test-webdav-btn').addEventListener('click', async () => {
       const url = document.getElementById('setting-webdav-url').value;
       const user = document.getElementById('setting-webdav-user').value;
