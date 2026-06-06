@@ -16,8 +16,8 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
   // sort
   if (sortField) {
     filtered = [...filtered].sort((a, b) => {
-      let va = sortField === 'id' ? (a.id - (vaults.find(v => v.id === a.vaultIds[0])?.idPrefix || 0)) : (a[sortField] || '');
-      let vb = sortField === 'id' ? (b.id - (vaults.find(v => v.id === b.vaultIds[0])?.idPrefix || 0)) : (b[sortField] || '');
+      let va = sortField === 'id' ? (a.order || 0) : (a[sortField] || '');
+      let vb = sortField === 'id' ? (b.order || 0) : (b[sortField] || '');
       if (typeof va === 'string') { va = va.toLowerCase(); vb = vb.toLowerCase(); }
       return va < vb ? (sortAsc ? -1 : 1) : va > vb ? (sortAsc ? 1 : -1) : 0;
     });
@@ -132,12 +132,8 @@ function createTableRow(entry, vaults) {
   row.setAttribute('data-id', entry.id);
   row.setAttribute('draggable', 'true');
 
-  // show short ID: subtract vault's idPrefix
-  let displayId = entry.id;
-  if (entry.vaultIds && entry.vaultIds.length) {
-    const vault = vaults.find(v => v.id === entry.vaultIds[0]);
-    if (vault) displayId = entry.id - vault.idPrefix;
-  }
+  // display ID follows visual order (entry.order + 1)
+  const displayId = (entry.order || 0) + 1;
 
   const trunc = (s, n) => { if (!s) return ''; s = String(s); return s.length > n ? s.slice(0, n) + '..' : s; };
   const ws = trunc(entry.website, 11);
