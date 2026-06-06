@@ -106,6 +106,11 @@ function initSetupWizard() {
   }));
 
   document.getElementById('setup-step2-next').addEventListener('click', setupStep2Next);
+  document.getElementById('setup-step2-next').disabled = true;
+
+  document.getElementById('setup-key-saved').addEventListener('change', function() {
+    document.getElementById('setup-step2-next').disabled = !this.checked;
+  });
 
   document.getElementById('setup-pick-path').addEventListener('click', async () => {
     const folder = await window.api.pickFolder();
