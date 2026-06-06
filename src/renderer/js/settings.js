@@ -158,3 +158,254 @@ async function initSettingsPage() {
 
   switchPanel('general');
 }
+
+// ─── Storage ────────────────────────────────────────────────
+
+async function showChangePath() {
+  const folder = await window.api.pickFolder();
+  if (!folder) return;
+
+  const newPath = folder + '\\vault.pvault';
+  const check = await window.api.checkStoragePath(newPath);
+  if (!check.success || check.exists) {
+    showToast('该路径已存在密码库文件，请选择其他目录');
+    return;
+  }
+
+  await window.api.setSetting('storagePath', newPath);
+  settingsCache.storagePath = newPath;
+  document.getElementById('setting-storage-path').textContent = newPath;
+  showToast('密码库路径已更新');
+}
+
+// ─── Security ───────────────────────────────────────────────
+
+async function showChangePassword() {
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small">
+      <h3>修改主密码</h3>
+      <div class="form-group"><input type="password" id="change-old-pw" class="input" placeholder="当前主密码"></div>
+      <div class="form-group"><input type="password" id="change-new-pw" class="input" placeholder="新主密码（至少4位）"></div>
+      <div class="form-group"><input type="password" id="change-new-pw-confirm" class="input" placeholder="确认新密码"></div>
+      <p id="change-pw-error" style="color:var(--danger);font-size:12px;display:none;"></p>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" id="change-pw-cancel">取消</button>
+        <button class="btn" id="change-pw-confirm">确认修改</button>
+      </div>
+    </div>`;
+
+  document.getElementById('change-pw-cancel').addEventListener('click', () => overlay.style.display = 'none');
+  document.getElementById('change-pw-confirm').addEventListener('click', async () => {
+    const oldPw = document.getElementById('change-old-pw').value;
+    const newPw = document.getElementById('change-new-pw').value;
+    const confirm = document.getElementById('change-new-pw-confirm').value;
+    const errEl = document.getElementById('change-pw-error');
+
+    if (!oldPw || !newPw) { errEl.textContent = '请填写所有字段'; errEl.style.display = 'block'; return; }
+    if (newPw.length < 4) { errEl.textContent = '新密码至少4位'; errEl.style.display = 'block'; return; }
+    if (newPw !== confirm) { errEl.textContent = '两次密码不一致'; errEl.style.display = 'block'; return; }
+
+    const result = await window.api.changeMasterPassword(oldPw, newPw);
+    if (result.success) {
+      overlay.style.display = 'none';
+      showToast('主密码已修改');
+    } else {
+      errEl.textContent = '当前密码错误';
+      errEl.style.display = 'block';
+    }
+  });
+}
+
+async function showRegenerateKey() {
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small" style="border:2px solid var(--warning);">
+      <h3 style="color:var(--warning);">重新生成恢复密钥</h3>
+      <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">重新生成后，旧密钥将立即失效。请确认已输入主密码。</p>
+      <div class="form-group"><input type="password" id="regen-pw" class="input" placeholder="当前主密码"></div>
+      <p id="regen-error" style="color:var(--danger);font-size:12px;display:none;"></p>
+      <p id="regen-result" style="color:var(--success);font-size:12px;display:none;"></p>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" id="regen-cancel">取消</button>
+        <button class="btn btn-warning" id="regen-confirm">重新生成</button>
+      </div>
+    </div>`;
+
+  document.getElementById('regen-cancel').addEventListener('click', () => overlay.style.display = 'none');
+  document.getElementById('regen-confirm').addEventListener('click', async () => {
+    const pw = document.getElementById('regen-pw').value;
+    if (!pw) { document.getElementById('regen-error').style.display = 'block'; document.getElementById('regen-error').textContent = '请输入主密码'; return; }
+
+    const result = await window.api.regenerateKey(pw);
+    if (result.success) {
+      document.getElementById('regen-error').style.display = 'none';
+      const resEl = document.getElementById('regen-result');
+      resEl.textContent = '新恢复密钥: ' + result.recoveryKey + '（请立即备份！）';
+      resEl.style.display = 'block';
+      document.getElementById('setting-key-hint').textContent = result.recoveryKey.slice(0, 4) + '****' + result.recoveryKey.slice(-4);
+      state.recoveryKeyHint = result.recoveryKey.slice(0, 4) + '****' + result.recoveryKey.slice(-4);
+      document.getElementById('regen-confirm').style.display = 'none';
+    } else {
+      document.getElementById('regen-error').style.display = 'block';
+      document.getElementById('regen-error').textContent = result.error || '密码错误';
+    }
+  });
+}
+
+// ─── Trash ──────────────────────────────────────────────────
+
+function renderTrash() {
+  const list = document.getElementById('trash-list');
+  const trash = state.trash || [];
+  if (!trash.length) {
+    list.innerHTML = '<p class="trash-empty">回收站为空</p>';
+    return;
+  }
+  list.innerHTML = trash.map((t, i) => `
+    <div class="trash-item">
+      <span class="trash-name">${escHtml(t.entry.website || t.entry.alias || '(无名称)')}</span>
+      <span class="trash-account">${escHtml(t.entry.account)}</span>
+      <span class="trash-date">${t.deletedAt ? new Date(t.deletedAt).toLocaleDateString() : ''}</span>
+      <button class="btn btn-tiny" data-restore="${t.entry.id}">还原</button>
+    </div>`).join('');
+
+  list.querySelectorAll('[data-restore]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = parseInt(btn.dataset.restore);
+      const ok = await window.api.restoreEntry(id);
+      if (ok) {
+        state = await window.api.getState();
+        renderTrash();
+        showToast('已还原');
+      }
+    });
+  });
+}
+
+async function clearTrash() {
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small"><h3>清空回收站</h3><p style="font-size:12px;color:var(--text-secondary);">确认后无法恢复。</p>
+      <div style="margin-top:12px;display:flex;gap:8px;justify-content:flex-end;">
+        <button class="btn" id="clear-trash-cancel">取消</button>
+        <button class="btn btn-danger" id="clear-trash-confirm">确认清空</button>
+      </div></div>`;
+
+  document.getElementById('clear-trash-cancel').addEventListener('click', () => overlay.style.display = 'none');
+  document.getElementById('clear-trash-confirm').addEventListener('click', async () => {
+    await window.api.clearTrash();
+    state = await window.api.getState();
+    overlay.style.display = 'none';
+    renderTrash();
+    showToast('回收站已清空');
+  });
+}
+
+// ─── Vaults ─────────────────────────────────────────────────
+
+function renderVaultList() {
+  const list = document.getElementById('vault-list');
+  const vaults = state.vaults || [];
+  list.innerHTML = vaults.map(v => `
+    <div class="vault-item">
+      <span class="vault-name">${escHtml(v.name)}</span>
+      <span class="vault-id">ID: ${v.id}</span>
+      <span class="vault-count">${(state.entries || []).filter(e => e.vaultIds && e.vaultIds.includes(v.id)).length} 条</span>
+      ${vaults.length > 1 ? `<button class="btn btn-tiny btn-danger" data-delete-vault="${v.id}">删除</button>` : ''}
+    </div>`).join('');
+
+  list.querySelectorAll('[data-delete-vault]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const vaultId = parseInt(btn.dataset.deleteVault);
+      showDeleteVaultDialog(vaultId);
+    });
+  });
+}
+
+function showDeleteVaultDialog(vaultId) {
+  const overlay = document.getElementById('delete-confirm-overlay');
+  overlay.style.display = 'flex';
+  overlay.innerHTML = `
+    <div class="modal modal-small"><h3>删除密码库</h3>
+      <p style="font-size:12px;color:var(--text-secondary);">请选择对库内条目的处理方式：</p>
+      <div style="margin-top:8px;display:flex;flex-direction:column;gap:8px;">
+        <button class="btn btn-small" id="vault-delete-move">移动到默认库</button>
+        <button class="btn btn-small btn-danger" id="vault-delete-remove">删除所有条目</button>
+        <button class="btn btn-small" id="vault-delete-cancel">取消</button>
+      </div></div>`;
+
+  document.getElementById('vault-delete-cancel').addEventListener('click', () => overlay.style.display = 'none');
+  document.getElementById('vault-delete-move').addEventListener('click', async () => {
+    await window.api.deleteVault(vaultId, 'move');
+    state = await window.api.getState();
+    overlay.style.display = 'none';
+    renderVaultList();
+    showToast('密码库已删除，条目已移动');
+  });
+  document.getElementById('vault-delete-remove').addEventListener('click', async () => {
+    await window.api.deleteVault(vaultId, 'delete');
+    state = await window.api.getState();
+    overlay.style.display = 'none';
+    renderVaultList();
+    showToast('密码库及条目已删除');
+  });
+}
+
+async function showAddVault() {
+  const name = prompt('新密码库名称：');
+  if (!name || !name.trim()) return;
+  const result = await window.api.addVault(name.trim());
+  if (result.success) {
+    state = await window.api.getState();
+    renderVaultList();
+    showToast('密码库已创建');
+  }
+}
+
+// ─── Data Management ────────────────────────────────────────
+
+async function exportPlain() {
+  const filePath = await window.api.saveFile([{ name: 'JSON Files', extensions: ['json'] }]);
+  if (!filePath) return;
+  await window.api.exportPlain(filePath);
+  showToast('明文导出成功: ' + filePath);
+}
+
+async function exportEncrypted() {
+  const filePath = await window.api.saveFile([{ name: 'PassVault Files', extensions: ['pvault'] }]);
+  if (!filePath) return;
+  await window.api.exportEncrypted(filePath);
+  showToast('加密导出成功: ' + filePath);
+}
+
+async function importFile() {
+  const filePath = await window.api.pickFile([{ name: 'PassVault Files', extensions: ['json', 'pvault'] }]);
+  if (!filePath) return;
+
+  const isEncrypted = filePath.endsWith('.pvault');
+  let password = null;
+
+  if (isEncrypted) {
+    password = prompt('请输入该加密文件的密码：');
+    if (!password) return;
+  }
+
+  const result = await window.api.importFile(filePath, isEncrypted ? 'encrypted' : 'plain', password);
+  if (result.success) {
+    showToast(`发现 ${result.entries.length} 条数据。冲突处理功能开发中，当前版本将跳过重复条目。`);
+    // TODO: implement conflict resolution dialog
+  } else {
+    showToast('导入失败: ' + (result.error || '未知错误'));
+  }
+}
+
+// ─── Helpers ────────────────────────────────────────────────
+
+function escHtml(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}

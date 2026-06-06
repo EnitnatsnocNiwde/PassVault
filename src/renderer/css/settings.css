@@ -31,14 +31,21 @@
 .shortcut-input { width: 120px; padding: 4px 8px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--bg-secondary); color: var(--text-primary); font-size: 12px; text-align: center; }
 
 .trash-list { margin-bottom: 8px; }
-.trash-item { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 12px; }
-.trash-item .trash-info { flex: 1; color: var(--text-secondary); }
-.trash-item .trash-time { font-size: 11px; color: var(--text-muted); margin-left: 8px; }
+.trash-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 12px; }
+.trash-name { flex: 1; color: var(--text-primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trash-account { color: var(--text-secondary); min-width: 80px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.trash-date { color: var(--text-muted); font-size: 11px; min-width: 80px; }
 .trash-empty { color: var(--text-muted); font-size: 12px; padding: 8px 0; }
 
 .vault-list { margin-bottom: 8px; }
 .vault-item { display: flex; align-items: center; gap: 8px; padding: 4px 0; }
 .vault-item .vault-drag { cursor: grab; color: var(--text-muted); }
-.vault-item .vault-name { flex: 1; font-size: 13px; color: var(--text-primary); }
+.vault-name { flex: 1; font-size: 13px; color: var(--text-primary); }
+.vault-id { color: var(--text-muted); font-size: 11px; }
+.vault-count { color: var(--text-secondary); font-size: 11px; min-width: 50px; }
 
 .key-hint { font-family: monospace; color: var(--accent); font-size: 13px; }
+
+.btn-tiny { padding: 2px 8px; font-size: 11px; border-radius: 3px; }
+.btn-warning { background: var(--warning); color: #fff; border: 1px solid var(--warning); }
+.btn-warning:hover { filter: brightness(1.1); }

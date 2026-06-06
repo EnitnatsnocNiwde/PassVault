@@ -94,7 +94,7 @@ function setupLockHandler() {
 }
 
 function setupVaultHandlers() {
-  ipcMain.handle('vault:setup', async (_, password, keyChoice, customKey, storagePath) => {
+  ipcMain.handle('vault:setup', async (_, password, keyChoice, storagePath, customKey) => {
     try {
       const result = vault.create(password, keyChoice, customKey, storagePath);
       settings.set('storagePath', vault.vaultPath);
