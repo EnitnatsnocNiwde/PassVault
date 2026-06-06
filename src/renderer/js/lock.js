@@ -108,6 +108,8 @@ function initSetupWizard() {
   }));
 
   document.getElementById('setup-step2-next').addEventListener('click', setupStep2Next);
+  document.getElementById('setup-step2-prev').addEventListener('click', () => switchSetupStep(1));
+  document.getElementById('setup-step3-prev').addEventListener('click', () => switchSetupStep(2));
   document.getElementById('setup-step2-next').disabled = true;
 
   document.getElementById('setup-key-saved').addEventListener('change', function() {

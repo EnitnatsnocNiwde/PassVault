@@ -38,14 +38,14 @@
 
 .main-header {
   display: flex; align-items: center; gap: 10px; padding: 10px 16px;
-  border-bottom: 1px solid var(--border); flex-shrink: 0;
+  border-bottom: 1.5px solid var(--border-hover); flex-shrink: 0;
   background: var(--bg-secondary);
 }
 .header-logo { height: 24px; width: auto; }
 .header-title { font-size: 15px; font-weight: 600; color: var(--text-primary); flex: 1; }
 
 .main-search-bar {
-  padding: 10px 16px; border-bottom: 1px solid var(--border);
+  padding: 10px 16px; border-bottom: 1.5px solid var(--border-hover);
   display: flex; flex-direction: column; gap: 8px; flex-shrink: 0;
   background: var(--bg-secondary);
 }
@@ -58,6 +58,7 @@
 .search-input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--ring); }
 .search-toggles { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
 .toggle-btn {
+  position: relative; z-index: 1;
   padding: 4px 12px; border: 1px solid var(--border); border-radius: 16px;
   background: var(--bg-tertiary); color: var(--text-secondary); font-size: 12px; cursor: pointer;
   user-select: none; white-space: nowrap; transition: 0.15s;
@@ -78,6 +79,9 @@
   background: var(--bg-secondary);
 }
 
+.copy-inline-btn { font-size: 10px; padding: 0 2px; background: none; border: none; cursor: pointer; color: var(--text-muted); opacity: 0; transition: opacity 0.15s; }
+.table-row:hover .copy-inline-btn { opacity: 1; }
+
 .sync-status-area { display: flex; align-items: center; gap: 6px; }
 .sync-status-icon { font-size: 14px; }
 .sync-status-icon.unsaved { color: var(--danger); }
@@ -86,12 +90,12 @@
 /* ── Table ── */
 .section-header {
   padding: 8px 0; font-size: 11px; font-weight: 600;
-  color: var(--text-muted); border-bottom: 1px solid var(--border);
+  color: var(--text-muted); border-bottom: 1.5px solid var(--border-hover);
   margin-top: 8px; margin-bottom: 4px;
 }
 .table-row {
   display: flex; align-items: center; padding: 7px 0;
-  border-bottom: 1px solid var(--border); gap: 0;
+  border-bottom: 1.5px solid var(--border-hover); gap: 0;
   transition: background 0.1s;
 }
 .table-row:hover { background: var(--bg-surface); }
@@ -141,7 +145,7 @@
 .vault-dropdown-item {
   display: flex; align-items: center; gap: 6px; padding: 6px 10px;
   font-size: 13px; color: var(--text-primary); cursor: pointer;
-  border-bottom: 1px solid var(--border); transition: 0.1s;
+  border-bottom: 1.5px solid var(--border-hover); transition: 0.1s;
 }
 .vault-dropdown-item:last-child { border-bottom: none; }
 .vault-dropdown-item:hover { background: var(--bg-surface); }

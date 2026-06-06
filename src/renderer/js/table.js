@@ -28,7 +28,7 @@ function renderTable(vaults, entries, searchQuery, searchFields, globalSearch, a
   // column header row
   const headerRow = document.createElement('div');
   headerRow.className = 'table-row table-header-row';
-  const sortableFields = ['id', 'website', 'alias', 'account', 'password', 'description'];
+  const sortableFields = ['id', 'website', 'alias', 'account'];
   const labels = { id: 'ID', website: '网站', alias: '别称', account: '账号', password: '密码', description: '描述' };
   const cells = sortableFields.map(f => {
     const clsMap = { id: 'col-id', website: 'col-website', alias: 'col-alias', account: 'col-account', password: 'col-password-hdr', description: 'col-description' };
@@ -137,16 +137,30 @@ function createTableRow(entry, vaults) {
     if (vault) displayId = entry.id - vault.idPrefix;
   }
 
+  const trunc = (s, n) => s.length > n ? s.slice(0, n) + '..' : s;
+  const ws = trunc(entry.website, 11);
+  const as = trunc(entry.alias, 11);
+  const ac = trunc(entry.account, 11);
+
   row.innerHTML = `
     <span class="col-id">${displayId}</span>
-    <span class="col-website">${escapeHtml(entry.website)}</span>
-    <span class="col-alias">${escapeHtml(entry.alias)}</span>
-    <span class="col-account">${escapeHtml(entry.account)}</span>
+    <span class="col-website">${escapeHtml(ws)}${entry.website.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.website)}" title="复制完整网址">📋</button>` : ''}</span>
+    <span class="col-alias">${escapeHtml(as)}</span>
+    <span class="col-account">${escapeHtml(ac)}${entry.account.length > 11 ? `<button class="btn-icon copy-inline-btn" data-text="${escapeAttr(entry.account)}" title="复制完整账号">📋</button>` : ''}</span>
     <span class="col-password" data-pw="${escapeAttr(entry.password)}" title="点击显示密码">****</span>
     <button class="btn-icon copy-row-btn" data-text="${escapeAttr(entry.password)}" title="复制密码">📝</button>
     <span class="col-description">${escapeHtml(entry.description || '-')}</span>
     <span class="col-drag" title="长按拖拽排序">≡</span>
   `;
+
+  // inline copy buttons (no auto-clear)
+  row.querySelectorAll('.copy-inline-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      window.api.copyToClipboard(btn.getAttribute('data-text'), 0);
+      showToast('已复制');
+    });
+  });
 
   row.querySelector('.col-password').addEventListener('click', async () => {
     const revealSec = (await window.api.getSettings()).passwordRevealSeconds || 3;

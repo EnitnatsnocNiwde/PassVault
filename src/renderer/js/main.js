@@ -373,6 +373,15 @@ async function showEditModal(id = null) {
   const overlay = document.getElementById('modal-overlay');
   overlay.style.display = 'flex';
 
+  // click outside to close
+  overlay.onclick = (e) => {
+    if (e.target === overlay) {
+      const hasContent = editingId || document.getElementById('edit-website').value || document.getElementById('edit-account').value || document.getElementById('edit-password').value;
+      if (!hasContent) { closeEditModal(); return; }
+      if (confirm('有未保存的内容，确定关闭吗？')) closeEditModal();
+    }
+  };
+
   const menu = document.getElementById('vault-dropdown-menu');
   const label = document.getElementById('vault-dropdown-label');
   const btn = document.getElementById('vault-dropdown-btn');
