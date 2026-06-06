@@ -5,10 +5,16 @@ body {
   overflow: hidden; user-select: none;
   height: 100vh;
   background-color: var(--bg-primary);
-  background-image: url('../assets/bg.png');
   background-size: cover;
   background-position: center;
-  background-blend-mode: overlay;
+}
+
+body.theme-dark {
+  background-image: url('../assets/bg2.png');
+}
+
+body.theme-light {
+  background-image: url('../assets/bg1.png');
 }
 
 :root {
