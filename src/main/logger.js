@@ -6,8 +6,7 @@ let enabled = false;
 
 function getLogDir() {
   if (LOG_DIR) return LOG_DIR;
-  const electron = require('electron');
-  LOG_DIR = path.join(electron.app.getPath('userData'), 'logs');
+  LOG_DIR = path.join(__dirname, '..', '..', 'logs');
   return LOG_DIR;
 }
 
