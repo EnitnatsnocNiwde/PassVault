@@ -11,6 +11,7 @@ class VaultService {
     this.data = null;
     this.recoveryKeyDisplay = null;
     this._crypto = null;
+    this._meta = {}; // { vaultId, deviceId, version, lastSyncVersion }
   }
 
   get crypto() { return this._crypto; }
@@ -28,7 +29,12 @@ class VaultService {
       vaults: this.data.vaults,
       entries: this.data.entries,
       trash: this.data.trash || [],
-      version: this.data._v || 0,
+      version: this._meta.version || 0,
+      vaultId: this._meta.vaultId || '',
+      deviceId: this._meta.deviceId || '',
+      lastSyncVersion: this._meta.lastSyncVersion || 0,
+      contentHash: this._meta.contentHash || '',
+      itemCount: this._meta.itemCount || 0,
       recoveryKeyHint: this.recoveryKeyDisplay
         ? `${this.recoveryKeyDisplay.slice(0, 4)}****${this.recoveryKeyDisplay.slice(-4)}`
         : null
@@ -55,6 +61,13 @@ class VaultService {
     vc.rekHash = hashSha256(vc.rek);
     this.recoveryKeyDisplay = recoveryKey;
 
+    this._meta = {
+      vaultId: hashSha256(crypto.randomBytes(16)).slice(0, 12),
+      deviceId: hashSha256(crypto.randomBytes(8) + require('os').hostname()).slice(0, 8),
+      version: 1,
+      lastSyncVersion: 0
+    };
+
     this.data = {
       vaults: [
         { id: 1, name: '默认', idPrefix: 10000, nextId: 10001, createdAt: new Date().toISOString() }
@@ -78,13 +91,27 @@ class VaultService {
   save() {
     if (!this.isUnlocked) return;
     this.data.updatedAt = new Date().toISOString();
+
+    this._meta.version = (this._meta.version || 0) + 1;
+    if (!this._meta.lastSyncVersion) this._meta.lastSyncVersion = 0;
+
     const payloadJson = JSON.stringify(this.data);
+    this._meta.contentHash = hashSha256(payloadJson).slice(0, 16);
+    this._meta.itemCount = (this.data.entries || []).length;
+
     const { encrypted, iv, authTag } = this.crypto.encryptPayload(payloadJson);
     const header = this.crypto.exportHeader();
     header.payloadIv = iv;
     header.payloadAuthTag = authTag;
-    header.v = (this.data._v || 0) + 1;
-    this.data._v = header.v;
+
+    // sync metadata in header (unencrypted, readable by sync logic)
+    header.vaultId = this._meta.vaultId;
+    header.deviceId = this._meta.deviceId;
+    header.version = this._meta.version;
+    header.lastSyncVersion = this._meta.lastSyncVersion;
+    header.contentHash = this._meta.contentHash;
+    header.itemCount = this._meta.itemCount;
+
     const headerJson = JSON.stringify(header);
     const content = headerJson + '\n' + encrypted;
 
@@ -107,6 +134,16 @@ class VaultService {
     const headerJson = raw.substring(0, newlineIndex);
     const encrypted = raw.substring(newlineIndex + 1);
     const header = JSON.parse(headerJson);
+
+    // restore sync metadata
+    this._meta = {
+      vaultId: header.vaultId || '',
+      deviceId: header.deviceId || '',
+      version: header.version || 0,
+      lastSyncVersion: header.lastSyncVersion || 0,
+      contentHash: header.contentHash || '',
+      itemCount: header.itemCount || 0
+    };
 
     const vc = new VaultCrypto();
     vc.importHeader(header);
@@ -146,6 +183,7 @@ class VaultService {
     this.data = null;
     this.crypto = null;
     this.recoveryKeyDisplay = null;
+    this._meta = {};
   }
 
   addEntry(entry) {

@@ -88,7 +88,6 @@ function setupLockHandler() {
   });
 
   ipcMain.handle('vault:reset-data', async () => {
-    // delete vault files from disk
     const storagePath = settings.get('storagePath');
     if (storagePath) {
       try { if (fs.existsSync(storagePath)) fs.unlinkSync(storagePath); } catch (e) {}
@@ -108,64 +107,31 @@ function setupVaultHandlers() {
       const result = vault.create(password, keyChoice, customKey, storagePath);
       settings.set('storagePath', vault.vaultPath);
       return { success: true, recoveryKey: result.recoveryKey, state: vault.state };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
+    } catch (e) { return { success: false, error: e.message }; }
   });
 
   ipcMain.handle('vault:save', async () => { vault.save(); return { success: true }; });
   ipcMain.handle('vault:get-state', async () => vault.state);
 
   ipcMain.handle('vault:add-entry', async (_, entry) => {
-    try {
-      const result = vault.addEntry(entry);
-      return { success: true, entries: result };
-    } catch (e) { return { success: false, error: e.message }; }
+    try { const result = vault.addEntry(entry); return { success: true, entries: result }; }
+    catch (e) { return { success: false, error: e.message }; }
   });
 
   ipcMain.handle('vault:update-entry', async (_, entry) => {
-    try {
-      const result = vault.updateEntry(entry);
-      return { success: true, entry: result };
-    } catch (e) { return { success: false, error: e.message }; }
+    try { const result = vault.updateEntry(entry); return { success: true, entry: result }; }
+    catch (e) { return { success: false, error: e.message }; }
   });
 
-  ipcMain.handle('vault:delete-entry', async (_, id) => {
-    const result = vault.deleteEntry(id);
-    return { success: result };
-  });
-
-  ipcMain.handle('vault:reorder', async (_, orderMap) => {
-    vault.reorderEntries(orderMap);
-    return { success: true };
-  });
-
-  ipcMain.handle('vault:restore-entry', async (_, id) => {
-    const result = vault.restoreEntry(id);
-    return { success: result };
-  });
-
+  ipcMain.handle('vault:delete-entry', async (_, id) => { const result = vault.deleteEntry(id); return { success: result }; });
+  ipcMain.handle('vault:reorder', async (_, orderMap) => { vault.reorderEntries(orderMap); return { success: true }; });
+  ipcMain.handle('vault:restore-entry', async (_, id) => { const result = vault.restoreEntry(id); return { success: result }; });
   ipcMain.handle('vault:clear-trash', async () => { vault.clearTrash(); return { success: true }; });
 
-  ipcMain.handle('vault:add-vault', async (_, name) => {
-    const result = vault.addVault(name);
-    return { success: true, vault: result };
-  });
-
-  ipcMain.handle('vault:delete-vault', async (_, id, action) => {
-    const result = vault.deleteVault(id, action);
-    return { success: result };
-  });
-
-  ipcMain.handle('vault:rename-vault', async (_, id, name) => {
-    const result = vault.renameVault(id, name);
-    return { success: result };
-  });
-
-  ipcMain.handle('vault:reorder-vaults', async (_, order) => {
-    vault.reorderVaults(order);
-    return { success: true };
-  });
+  ipcMain.handle('vault:add-vault', async (_, name) => { const result = vault.addVault(name); return { success: true, vault: result }; });
+  ipcMain.handle('vault:delete-vault', async (_, id, action) => { const result = vault.deleteVault(id, action); return { success: result }; });
+  ipcMain.handle('vault:rename-vault', async (_, id, name) => { const result = vault.renameVault(id, name); return { success: result }; });
+  ipcMain.handle('vault:reorder-vaults', async (_, order) => { vault.reorderVaults(order); return { success: true }; });
 
   ipcMain.handle('vault:export-plain', async (_, filePath) => {
     const data = vault.exportPlain();
@@ -173,10 +139,7 @@ function setupVaultHandlers() {
     return { success: true };
   });
 
-  ipcMain.handle('vault:export-encrypted', async (_, filePath) => {
-    fs.copyFileSync(vault.vaultPath, filePath);
-    return { success: true };
-  });
+  ipcMain.handle('vault:export-encrypted', async (_, filePath) => { fs.copyFileSync(vault.vaultPath, filePath); return { success: true }; });
 
   ipcMain.handle('vault:import', async (_, filePath, type, password) => {
     try {
@@ -196,72 +159,33 @@ function setupVaultHandlers() {
         if (!result) return { success: false, error: 'WRONG_PASSWORD' };
         return { success: true, entries: tempVault.data.entries, conflicts: [] };
       }
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
+    } catch (e) { return { success: false, error: e.message }; }
   });
 
   ipcMain.handle('vault:import-finalize', async (_, entries, conflictsResolved) => {
-    try {
-      const added = vault.importPlain(entries, (vault.state.vaults[0] || {}).id || 1, conflictsResolved);
-      return { success: true, added };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
+    try { const added = vault.importPlain(entries, (vault.state.vaults[0] || {}).id || 1, conflictsResolved); return { success: true, added }; }
+    catch (e) { return { success: false, error: e.message }; }
   });
 
-  ipcMain.handle('vault:change-master', async (_, oldPw, newPw) => {
-    const result = vault.changeMasterPassword(oldPw, newPw);
-    return { success: result };
-  });
-
+  ipcMain.handle('vault:change-master', async (_, oldPw, newPw) => { const result = vault.changeMasterPassword(oldPw, newPw); return { success: result }; });
   ipcMain.handle('vault:regenerate-key', async (_, password) => {
-    try {
-      const newKey = vault.regenerateRecoveryKey(password);
-      return { success: true, recoveryKey: newKey };
-    } catch (e) {
-      return { success: false, error: e.message };
-    }
+    try { const newKey = vault.regenerateRecoveryKey(password); return { success: true, recoveryKey: newKey }; }
+    catch (e) { return { success: false, error: e.message }; }
   });
 
-  ipcMain.handle('key:generate-random', async () => {
-    const crypto = require('crypto');
-    return crypto.randomBytes(32).toString('hex');
-  });
-
-  ipcMain.handle('check-storage-path', async (_, filePath) => {
-    let exists = false;
-    try {
-      exists = fs.existsSync(filePath);
-    } catch (e) {}
-    return { success: !exists, exists };
-  });
+  ipcMain.handle('key:generate-random', async () => { const crypto = require('crypto'); return crypto.randomBytes(32).toString('hex'); });
+  ipcMain.handle('check-storage-path', async (_, filePath) => { let exists = false; try { exists = fs.existsSync(filePath); } catch (e) {} return { success: !exists, exists }; });
 }
 
 function setupSettingsHandlers() {
   ipcMain.handle('settings:get', async () => settings.getAll());
-  ipcMain.handle('settings:set', async (_, key, value) => {
-    settings.set(key, value);
-    if (key === 'autoLockMinutes') autoLock.update(value);
-    return { success: true };
-  });
+  ipcMain.handle('settings:set', async (_, key, value) => { settings.set(key, value); if (key === 'autoLockMinutes') autoLock.update(value); return { success: true }; });
 }
 
 function setupDialogHandlers() {
-  ipcMain.handle('dialog:pick-folder', async () => {
-    const result = await dialog.showOpenDialog(getWin(), { properties: ['openDirectory'] });
-    return result.canceled ? null : result.filePaths[0];
-  });
-
-  ipcMain.handle('dialog:pick-file', async (_, filters) => {
-    const result = await dialog.showOpenDialog(getWin(), { filters, properties: ['openFile'] });
-    return result.canceled ? null : result.filePaths[0];
-  });
-
-  ipcMain.handle('dialog:save-file', async (_, filters) => {
-    const result = await dialog.showSaveDialog(getWin(), { filters });
-    return result.canceled ? null : result.filePath;
-  });
+  ipcMain.handle('dialog:pick-folder', async () => { const result = await dialog.showOpenDialog(getWin(), { properties: ['openDirectory'] }); return result.canceled ? null : result.filePaths[0]; });
+  ipcMain.handle('dialog:pick-file', async (_, filters) => { const result = await dialog.showOpenDialog(getWin(), { filters, properties: ['openFile'] }); return result.canceled ? null : result.filePaths[0]; });
+  ipcMain.handle('dialog:save-file', async (_, filters) => { const result = await dialog.showSaveDialog(getWin(), { filters }); return result.canceled ? null : result.filePath; });
 }
 
 function setupClipboardHandler() {
@@ -270,53 +194,21 @@ function setupClipboardHandler() {
     clipboard.writeText(text);
     if (duration > 0) {
       if (timers.current) clearTimeout(timers.current);
-      timers.current = setTimeout(() => {
-        if (clipboard.readText() === text) clipboard.writeText('');
-      }, duration * 60 * 1000);
+      timers.current = setTimeout(() => { if (clipboard.readText() === text) clipboard.writeText(''); }, duration * 60 * 1000);
     }
     return { success: true };
   });
-
-  ipcMain.handle('clipboard:read', async () => {
-    return clipboard.readText();
-  });
+  ipcMain.handle('clipboard:read', async () => clipboard.readText());
 }
 
 function setupAppHandlers() {
-  ipcMain.handle('app:get-path', async () => {
-    return path.join(__dirname, '..', '..');
-  });
+  ipcMain.handle('app:get-path', async () => path.join(__dirname, '..', '..'));
+  ipcMain.handle('app:hide-window', async () => { const win = getWin(); if (win) win.hide(); return { success: true }; });
+  ipcMain.handle('app:force-quit', async () => { const win = getWin(); if (win) win.removeAllListeners('close'); app.quit(); return { success: true }; });
 
-  ipcMain.handle('app:hide-window', async () => {
-    const win = getWin();
-    if (win) win.hide();
-    return { success: true };
-  });
-
-  ipcMain.handle('app:force-quit', async () => {
-    const win = getWin();
-    if (win) win.removeAllListeners('close');
-    app.quit();
-    return { success: true };
-  });
-
-  ipcMain.handle('log:toggle', async (_, enabled) => {
-    logger.setEnabled(enabled);
-    settings.set('logEnabled', enabled);
-    logger.info('APP', enabled ? 'Logging enabled' : 'Logging disabled');
-    return { success: true };
-  });
-
-  ipcMain.handle('log:get-dir', async () => {
-    return logger.getLogDir();
-  });
-
-  ipcMain.handle('log:open-dir', async () => {
-    const { shell } = require('electron');
-    const dir = logger.getLogDir();
-    shell.openPath(dir);
-    return { success: true };
-  });
+  ipcMain.handle('log:toggle', async (_, enabled) => { logger.setEnabled(enabled); settings.set('logEnabled', enabled); logger.info('APP', enabled ? 'Logging enabled' : 'Logging disabled'); return { success: true }; });
+  ipcMain.handle('log:get-dir', async () => logger.getLogDir());
+  ipcMain.handle('log:open-dir', async () => { const { shell } = require('electron'); shell.openPath(logger.getLogDir()); return { success: true }; });
 }
 
 function setupSyncHandlers() {
@@ -328,7 +220,10 @@ function setupSyncHandlers() {
     try {
       const vaultPath = settings.get('storagePath');
       if (!vaultPath) throw new Error('未设置存储路径');
-      return await sync.pushVault(vaultPath);
+      const result = await sync.pushVault(vaultPath);
+      const meta = vault.state;
+      if (meta && meta.version) { vault._meta.lastSyncVersion = meta.version; vault.save(); }
+      return result;
     } catch (e) { return { success: false, message: e.message }; }
   });
 
@@ -359,149 +254,44 @@ function setupSyncHandlers() {
     try {
       const cfg = settings.get('syncConfig') || {};
       if (!cfg.mode || cfg.mode === 'none') return { hasUpdate: false };
-
-      const vaultPath = settings.get('storagePath');
-      if (!vaultPath || !fs.existsSync(vaultPath)) return { hasUpdate: false };
-
-      // read local version from header
-      let localVersion = 0;
-      try {
-        const raw = fs.readFileSync(vaultPath, 'utf8');
-        const nl = raw.indexOf('\n');
-        const hdr = JSON.parse(raw.substring(0, nl));
-        localVersion = hdr.v || 0;
-      } catch (e) {}
-
-      // get remote version
-      const rv = await sync.getRemoteVersion();
-      if (!rv.exists) return { hasUpdate: false };
-
-      return {
-        hasUpdate: rv.version > localVersion,
-        localVersion,
-        remoteVersion: rv.version
-      };
-    } catch (e) {
-      return { hasUpdate: false };
-    }
+      const localMeta = vault.state;
+      const localVersion = (localMeta && localMeta.version) || 0;
+      const remote = await sync.getRemoteVersion();
+      const remoteVersion = (remote.exists && remote.version) || 0;
+      return { hasUpdate: remoteVersion > localVersion, localVersion, remoteVersion };
+    } catch (e) { return { hasUpdate: false }; }
   });
 
   ipcMain.handle('sync:compare', async () => {
     try {
-      const cfg = settings.get('syncConfig') || {};
-      if (!cfg.mode || cfg.mode === 'none') return { ok: false, reason: '未配置同步' };
-
       const vaultPath = settings.get('storagePath');
-      if (!vaultPath || !fs.existsSync(vaultPath)) return { ok: false, reason: '本地无文件' };
-
-      // download remote to temp
-      const os = require('os');
-      const tmpPath = path.join(os.tmpdir(), 'passvault_remote.pvault');
-      try { fs.unlinkSync(tmpPath); } catch (e) {}
-
-      const pullResult = await sync.pullVault(tmpPath);
-      if (!pullResult.success) return { ok: false, reason: '无法下载云端文件: ' + (pullResult.message || '') };
-
-      // try decrypt with current vault's crypto
-      const raw = fs.readFileSync(tmpPath, 'utf8');
-      const nl = raw.indexOf('\n');
-      const hdr = JSON.parse(raw.substring(0, nl));
-      const encrypted = raw.substring(nl + 1);
-
-      if (!vault.crypto || !vault.crypto.isUnlocked) {
-        try { fs.unlinkSync(tmpPath); } catch (e) {}
-        return { ok: false, reason: '密码库未解锁' };
-      }
-
-      let remoteData;
-      try {
-        const payloadJson = vault.crypto.decryptPayload(encrypted, hdr.payloadIv, hdr.payloadAuthTag);
-        remoteData = JSON.parse(payloadJson);
-      } catch (e) {
-        try { fs.unlinkSync(tmpPath); } catch (e) {}
-        return { ok: false, reason: '无法解密云端文件（密钥不匹配，可能是其他设备的密码库）' };
-      }
-
-      // compare entries
-      const localEntries = vault.state.entries || [];
-      const remoteEntries = remoteData.entries || [];
-      const localMap = new Map(localEntries.map(e => [e.website + '|' + (e.alias||'') + '|' + e.account, e]));
-      const remoteMap = new Map(remoteEntries.map(e => [e.website + '|' + (e.alias||'') + '|' + e.account, e]));
-
-      const localOnly = [], remoteOnly = [], bothDiffer = [];
-      localMap.forEach((e, key) => {
-        if (!remoteMap.has(key)) localOnly.push(e);
-        else {
-          const re = remoteMap.get(key);
-          if (e.password !== re.password || e.description !== re.description) bothDiffer.push({ local: e, remote: re });
-        }
-      });
-      remoteMap.forEach((e, key) => { if (!localMap.has(key)) remoteOnly.push(e); });
-
-      const hasDiff = localOnly.length > 0 || remoteOnly.length > 0 || bothDiffer.length > 0;
-      try { fs.unlinkSync(tmpPath); } catch (e) {}
-
-      return {
-        ok: true,
-        hasDiff,
-        localVersion: vault.state.version || 0,
-        remoteVersion: hdr.v || 0,
-        localOnly: localOnly.map(e => ({ website: e.website, alias: e.alias, account: e.account })),
-        remoteOnly: remoteOnly.map(e => ({ website: e.website, alias: e.alias, account: e.account })),
-        diffCount: bothDiffer.length,
-        localTotal: localEntries.length,
-        remoteTotal: remoteEntries.length
-      };
-    } catch (e) {
-      return { ok: false, reason: e.message };
-    }
+      const localMeta = vault.state;
+      if (!localMeta || localMeta.status !== 'unlocked')
+        return { action: 'none', reason: '密码库未解锁' };
+      const cfg = settings.get('syncConfig') || {};
+      if (!cfg.mode || cfg.mode === 'none')
+        return { action: 'none', reason: '未配置同步' };
+      return await sync.compare(localMeta, vaultPath);
+    } catch (e) { return { action: 'none', reason: e.message }; }
   });
 
-  ipcMain.handle('sync:merge', async () => {
+  ipcMain.handle('sync:resolve-upload', async () => {
     try {
-      const cfg = settings.get('syncConfig') || {};
-      if (!cfg.mode || cfg.mode === 'none') throw new Error('未配置同步');
-
       const vaultPath = settings.get('storagePath');
-      if (!vaultPath) throw new Error('无本地文件');
+      if (!vaultPath) throw new Error('未设置存储路径');
+      const result = await sync.pushVault(vaultPath);
+      const meta = vault.state;
+      if (meta && meta.version) { vault._meta.lastSyncVersion = meta.version; vault.save(); }
+      return result;
+    } catch (e) { return { success: false, message: e.message }; }
+  });
 
-      // download remote
-      const os = require('os');
-      const tmpPath = path.join(os.tmpdir(), 'passvault_remote.pvault');
-      try { fs.unlinkSync(tmpPath); } catch (e) {}
-      const pullResult = await sync.pullVault(tmpPath);
-      if (!pullResult.success) throw new Error('下载失败');
-
-      // decrypt remote
-      const raw = fs.readFileSync(tmpPath, 'utf8');
-      const nl = raw.indexOf('\n');
-      const hdr = JSON.parse(raw.substring(0, nl));
-      const encrypted = raw.substring(nl + 1);
-      const payloadJson = vault.crypto.decryptPayload(encrypted, hdr.payloadIv, hdr.payloadAuthTag);
-      const remoteData = JSON.parse(payloadJson);
-
-      // merge: add remote entries not in local
-      const localEntries = vault.state.entries || [];
-      const localKeys = new Set(localEntries.map(e => e.website + '|' + e.alias + '|' + e.account));
-      let added = 0;
-      for (const re of (remoteData.entries || [])) {
-        const key = re.website + '|' + (re.alias || '') + '|' + re.account;
-        if (!localKeys.has(key)) {
-          const vaultId = (vault.state.vaults[0] || {}).id || 1;
-          const v = vault.state.vaults.find(x => x.id === vaultId);
-          const id = v ? v.nextId++ : Date.now();
-          re.id = id;
-          re.vaultIds = [vaultId];
-          vault.state.entries.push(re);
-          added++;
-        }
-      }
-      vault.save();
-      try { fs.unlinkSync(tmpPath); } catch (e) {}
-      return { success: true, added };
-    } catch (e) {
-      return { success: false, added: 0, error: e.message };
-    }
+  ipcMain.handle('sync:resolve-download', async () => {
+    try {
+      const vaultPath = settings.get('storagePath');
+      if (!vaultPath) throw new Error('未设置存储路径');
+      return await sync.pullVault(vaultPath);
+    } catch (e) { return { success: false, message: e.message }; }
   });
 }
 

@@ -60,5 +60,6 @@ contextBridge.exposeInMainWorld('api', {
   syncGetConfig: () => ipcRenderer.invoke('sync:get-config'),
   syncCheckUpdate: () => ipcRenderer.invoke('sync:check-update'),
   syncCompare: () => ipcRenderer.invoke('sync:compare'),
-  syncMerge: () => ipcRenderer.invoke('sync:merge')
+  syncResolveUpload: () => ipcRenderer.invoke('sync:resolve-upload'),
+  syncResolveDownload: () => ipcRenderer.invoke('sync:resolve-download')
 });
