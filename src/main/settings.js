@@ -4,7 +4,7 @@ const path = require('path');
 
 const DEFAULTS = {
   language: 'zh-CN',
-  theme: 'dark',
+  theme: 'light',
   autoLockMinutes: 30,
   loginAttemptLimit: 5,
   passwordRevealSeconds: 3,
