@@ -69,7 +69,7 @@ async function initMainPage() {
     if (!cmp.ok) {
       icon.className = 'sync-status-icon unsaved';
       icon.textContent = '✕';
-      showToast(cmp.reason || t('sync.pushFail'));
+      showToast(t(cmp.reasonKey) || cmp.reason || t('sync.pushFail'));
       return;
     }
     if (!cmp.hasDiff) {
@@ -263,7 +263,7 @@ async function showSyncDiffDialog(cmp) {
     overlay.innerHTML = `
       <div class="modal modal-small">
         <h3>云端同步</h3>
-        <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">${cmp.reason}，正在上传本地 v${cmp.localVersion || '?'}...</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">${t(cmp.reasonKey) || cmp.reason}，正在上传本地 v${cmp.localVersion || '?'}...</p>
       </div>`;
     const r = await window.api.syncResolveUpload();
     overlay.style.display = 'none';
@@ -281,7 +281,7 @@ async function showSyncDiffDialog(cmp) {
     overlay.innerHTML = `
       <div class="modal modal-small">
         <h3>云端同步</h3>
-        <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">${cmp.reason}，正在下载云端 v${cmp.remoteVersion || '?'}...</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin:8px 0;">${t(cmp.reasonKey) || cmp.reason}，正在下载云端 v${cmp.remoteVersion || '?'}...</p>
       </div>`;
     const r = await window.api.syncResolveDownload();
     overlay.style.display = 'none';
@@ -297,7 +297,7 @@ async function showSyncDiffDialog(cmp) {
   if (cmp.action === 'none') {
     document.getElementById('sync-status-icon').className = 'sync-status-icon synced';
     document.getElementById('sync-status-icon').textContent = '●';
-    showToast(cmp.reason || t('sync.sameContent'));
+    showToast(t(cmp.reasonKey) || cmp.reason || t('sync.sameContent'));
     return;
   }
 
@@ -324,7 +324,7 @@ async function showSyncDiffDialog(cmp) {
       <button class="btn btn-small" id="sync-cancel">取消</button>`;
   } else {
     title = '本地与云端数据不一致';
-    body = `本地版本 ${cmp.localVersion || '?'}，云端版本 ${cmp.remoteVersion || '?'}<br><span style="font-size:11px;color:var(--text-muted)">${cmp.type === 'both_modified' ? '本地和云端各有修改，无法自动判断方向' : cmp.type === 'hash_mismatch' ? '版本号相同但内容不同，可能是多设备冲突' : cmp.reason}</span>`;
+    body = `本地版本 ${cmp.localVersion || '?'}，云端版本 ${cmp.remoteVersion || '?'}<br><span style="font-size:11px;color:var(--text-muted)">${cmp.type === 'both_modified' ? t('sync.bothModified') : cmp.type === 'hash_mismatch' ? t('sync.hashMismatch') : (t(cmp.reasonKey) || cmp.reason)}</span>`;
     buttons = `
       <button class="btn" id="sync-push-local">⬆ 以本地为准覆盖云端</button>
       <button class="btn" id="sync-pull-remote">⬇ 以云端为准覆盖本地</button>
