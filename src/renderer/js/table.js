@@ -137,7 +137,7 @@ function createTableRow(entry, vaults) {
     if (vault) displayId = entry.id - vault.idPrefix;
   }
 
-  const trunc = (s, n) => s.length > n ? s.slice(0, n) + '..' : s;
+  const trunc = (s, n) => { if (!s) return ''; s = String(s); return s.length > n ? s.slice(0, n) + '..' : s; };
   const ws = trunc(entry.website, 11);
   const as = trunc(entry.alias, 11);
   const ac = trunc(entry.account, 11);
