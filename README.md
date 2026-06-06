@@ -14,6 +14,7 @@
 </p>
 
 <p align="center">
+  <img src="https://img.shields.io/badge/version-1.0.0-blue" alt="Version">
   <img src="https://img.shields.io/badge/platform-Windows-blue" alt="Platform">
   <img src="https://img.shields.io/badge/electron-31.7.7-brightgreen" alt="Electron">
   <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
@@ -49,23 +50,25 @@ PassVault is a desktop password manager built with Electron, designed for person
 
 ### Quick Start
 
-**Requirements**: Node.js ≥ 18
+**Option 1: Download** (recommended)
+
+👉 [Download PassVault v1.0.0 Installer](https://github.com/lvivvde/PassVault/releases/tag/v1.0.0)
+
+**Option 2: Build from source**
+
+Requirements: Node.js ≥ 18
 
 ```bash
-# Clone
 git clone https://github.com/lvivvde/PassVault.git
 cd PassVault
-
-# Install
 npm install
-
-# Run (dev mode)
-npm start
-
-# Build Windows installer
-npm run build
-# Output: dist/PassVault Setup 1.0.0.exe (~55 MB)
+npm start          # dev mode
+npm run build      # build → dist/PassVault Setup 1.0.0.exe
 ```
+
+> **Build troubleshooting (China network)**: GitHub downloads may fail. Pre-download these to `%LOCALAPPDATA%\electron-builder\Cache\`:
+> - [winCodeSign-2.6.0.7z via npmmirror](https://npmmirror.com/mirrors/electron-builder-binaries/winCodeSign-2.6.0/winCodeSign-2.6.0.7z) → extract to `winCodeSign\winCodeSign-2.6.0\`
+> - [nsis-3.0.4.1.7z via npmmirror](https://npmmirror.com/mirrors/electron-builder-binaries/nsis-3.0.4.1/nsis-3.0.4.1.7z) → extract to `nsis\nsis-3.0.4.1\`
 
 ### Project Structure
 
@@ -80,17 +83,23 @@ passvault/
 │   │   ├── vault.js     # Data CRUD, multi-vault, trash
 │   │   ├── settings.js  # JSON config manager
 │   │   ├── logger.js    # Lazy-init file logging
-│   │   ├── sync.js      # WebDAV sync (push/pull/auto)
 │   │   ├── autoLock.js  # Idle detection timer
-│   │   └── ipc-handlers.js  # 40+ IPC channels
+│   │   ├── ipc-handlers.js  # IPC channels
+│   │   └── sync/        # Sync module
+│   │       ├── index.js          # SyncManager (compare/push/pull)
+│   │       └── providers/
+│   │           ├── webdav.js     # WebDAV sync
+│   │           └── folder.js     # Local folder sync
 │   ├── renderer/        # UI (SPA, 4 pages)
 │   │   ├── index.html
 │   │   ├── css/         # base, lock, main, settings
 │   │   └── js/          # app, lock, table, main, settings, i18n
-│   └── shared/
-│       └── constants.js
-├── icon/                # App logo (user-replaceable)
-├── docs/                # DESIGN.md, CHANGELOG.md
+│   └── i18n/            # Internationalization
+│       ├── index.js      # t() + applyI18n()
+│       ├── zh-CN.json    # 209 keys
+│       └── en.json       # English translation
+├── icon/                # App logo
+├── docs/                # DESIGN.md, CHANGELOG.md, etc.
 └── dist/                # Build output
 ```
 
@@ -136,23 +145,25 @@ PassVault 是一款基于 Electron 的桌面密码管理器，面向个人用户
 
 ### 快速开始
 
-**环境要求**：Node.js ≥ 18
+**方式一：直接下载**（推荐）
+
+👉 [下载 PassVault v1.0.0 安装包](https://github.com/lvivvde/PassVault/releases/tag/v1.0.0)
+
+**方式二：从源码构建**
+
+环境要求：Node.js ≥ 18
 
 ```bash
-# 克隆仓库
 git clone https://github.com/lvivvde/PassVault.git
 cd PassVault
-
-# 安装依赖
 npm install
-
-# 开发模式运行
-npm start
-
-# 打包 Windows 安装程序
-npm run build
-# 输出: dist/PassVault Setup 1.0.0.exe (~55 MB)
+npm start          # 开发模式运行
+npm run build      # 构建 → dist/PassVault Setup 1.0.0.exe
 ```
+
+> **国内网络构建踩坑指南**：GitHub 下载可能失败。提前下载以下文件到 `%LOCALAPPDATA%\electron-builder\Cache\`：
+> - [winCodeSign-2.6.0.7z (npmmirror 镜像)](https://npmmirror.com/mirrors/electron-builder-binaries/winCodeSign-2.6.0/winCodeSign-2.6.0.7z) → 解压到 `winCodeSign\winCodeSign-2.6.0\`
+> - [nsis-3.0.4.1.7z (npmmirror 镜像)](https://npmmirror.com/mirrors/electron-builder-binaries/nsis-3.0.4.1/nsis-3.0.4.1.7z) → 解压到 `nsis\nsis-3.0.4.1\`
 
 ### 项目结构
 
@@ -166,16 +177,24 @@ passvault/
 │   │   ├── crypto.js    # PBKDF2 + AES-256-GCM 加密引擎
 │   │   ├── vault.js     # 数据增删改查、多 Vault、回收站
 │   │   ├── settings.js  # JSON 配置文件管理
+│   │   ├── logger.js    # 日志记录
 │   │   ├── autoLock.js  # 空闲检测定时器
-│   │   └── ipc-handlers.js  # 30 条 IPC 通信通道
+│   │   ├── ipc-handlers.js  # IPC 通信通道
+│   │   └── sync/        # 同步模块
+│   │       ├── index.js          # SyncManager（对比/推/拉）
+│   │       └── providers/
+│   │           ├── webdav.js     # WebDAV 同步
+│   │           └── folder.js     # 本地文件夹同步
 │   ├── renderer/        # 渲染层（单页应用，4 个页面）
 │   │   ├── index.html
 │   │   ├── css/         # base, lock, main, settings
 │   │   └── js/          # app, lock, table, main, settings, i18n
-│   └── shared/
-│       └── constants.js
-├── icon/                # 应用图标（用户可替换）
-├── docs/                # 设计文档、变更日志
+│   └── i18n/            # 国际化
+│       ├── index.js      # t() + applyI18n()
+│       ├── zh-CN.json    # 209 个 key
+│       └── en.json       # 英文翻译
+├── icon/                # 应用图标
+├── docs/                # 设计文档、变更日志等
 └── dist/                # 构建输出
 ```
 
