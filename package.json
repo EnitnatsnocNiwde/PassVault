@@ -1,6 +1,6 @@
 {
   "name": "passvault",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Lightweight encrypted password manager",
   "author": "lvivvde",
   "license": "MIT",
