@@ -70,6 +70,28 @@ npm run build      # build → dist/PassVault Setup 1.0.0.exe
 > - [winCodeSign-2.6.0.7z via npmmirror](https://npmmirror.com/mirrors/electron-builder-binaries/winCodeSign-2.6.0/winCodeSign-2.6.0.7z) → extract to `winCodeSign\winCodeSign-2.6.0\`
 > - [nsis-3.0.4.1.7z via npmmirror](https://npmmirror.com/mirrors/electron-builder-binaries/nsis-3.0.4.1/nsis-3.0.4.1.7z) → extract to `nsis\nsis-3.0.4.1\`
 
+### CSV Import
+
+Import passwords exported from Chrome, Edge, or other password managers in CSV/TSV/TXT format:
+
+1. Go to **Settings → Data Management → Import CSV**
+2. Select your `.csv` / `.tsv` / `.txt` file
+3. Auto-detection: delimiter and column names are matched to PassVault fields
+4. Review and adjust column mapping if needed (dropdown per column)
+5. Pick the target vault, click **Start Import**
+
+Test it with the [sample file](docs/sample-import.csv).
+
+| CSV column | Matches to | Keywords |
+|-----------|-----------|----------|
+| url / website / 网址 | **website** | url, site |
+| name / title / 名称 | **alias** | name, title, alias |
+| username / email / 用户名 | **account** | user, email, login |
+| password / 密码 / pwd | **password** | pass, pwd |
+| note / description / 备注 | **description** | notes, desc |
+
+> Smart dedup: same vault + same website + same account + same password = skipped with a friendly count.
+
 ### Project Structure
 
 ```
@@ -164,6 +186,28 @@ npm run build      # 构建 → dist/PassVault Setup 1.0.0.exe
 > **国内网络构建踩坑指南**：GitHub 下载可能失败。提前下载以下文件到 `%LOCALAPPDATA%\electron-builder\Cache\`：
 > - [winCodeSign-2.6.0.7z (npmmirror 镜像)](https://npmmirror.com/mirrors/electron-builder-binaries/winCodeSign-2.6.0/winCodeSign-2.6.0.7z) → 解压到 `winCodeSign\winCodeSign-2.6.0\`
 > - [nsis-3.0.4.1.7z (npmmirror 镜像)](https://npmmirror.com/mirrors/electron-builder-binaries/nsis-3.0.4.1/nsis-3.0.4.1.7z) → 解压到 `nsis\nsis-3.0.4.1\`
+
+### CSV 导入
+
+支持从 Chrome、Edge 或其他密码管理器导出的 CSV/TSV/TXT 文件导入密码：
+
+1. 进入 **设置 → 数据管理 → 选择CSV/TSV文件**
+2. 选择 `.csv` / `.tsv` / `.txt` 文件
+3. 自动识别分隔符和列名，匹配到 PassVault 字段
+4. 预览并调整列名映射（每列可手动切换映射目标）
+5. 选择目标密码库，点击 **开始导入**
+
+可使用 [示例文件](docs/sample-import.csv) 测试。
+
+| CSV 列名 | 映射到 | 匹配关键词 |
+|----------|--------|-----------|
+| url / website / 网址 | **网站** | url, site |
+| name / title / 名称 | **别称** | name, title, alias |
+| username / email / 用户名 | **账号** | user, email, login |
+| password / 密码 / pwd | **密码** | pass, pwd |
+| note / description / 备注 | **描述** | notes, desc |
+
+> 智能去重：同一密码库 + 相同网站 + 相同账号 + 相同密码 = 自动跳过并提示数量。
 
 ### 项目结构
 

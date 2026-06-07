@@ -1,0 +1,5 @@
+name,url,username,password,note
+示例邮箱,https://mail.example.com/,demo@example.com,MyPass123,主邮箱账号
+示例GitHub,https://github.com/,example-user,gh_YourPass,开发者账号
+示例论坛,https://forum.example.com/,nickname,PassWord!,日常闲聊
+示例购物,https://shop.example.com/,buyer01,ShopPwd#2024,购物账号
